@@ -1,0 +1,170 @@
+<section class="hero" aria-labelledby="hero-title">
+  <div>
+    <div class="eyebrow"><span class="status">No-code crypto AI</span><span>Runs in your browser · GenesisL1 EVM · Chain 29</span></div>
+    <h1 id="hero-title" class="display"><span class="line">Launch your own</span> <span class="line serif hype-text">Crypto AI model.</span></h1>
+    <p class="lead">Pick a coin. Ask a yes-or-no question about the next few hours or days. Your Crypto AI model studies the candles for an answer, or tells you honestly there isn’t one. Backtest it with fees, mint it on GenesisL1 as an on-chain Crypto AI model, share it. No code, no server, no sign-up.</p>
+    <div class="hero-cta"><a class="btn hype lg" href="./app.html">Create your Crypto AI model</a><a class="btn lg" href="#questions">See what it can answer</a></div>
+    <p class="meta"><span>Binance</span><span>Coinbase</span><span>Hyperliquid</span><span>274 signals</span><span>Walk-forward tested</span><span>On-chain AI inference</span></p>
+    <p class="fineprint"><span aria-hidden="true">⚠</span><span><strong>Educational, experimental software.</strong> Not investment advice. Trading can lose you everything. No riches guaranteed. <a href="#disclaimer">Read the disclaimer</a>.</span></p>
+  </div>
+  <div>
+    <div class="car-stage" id="car-stage">
+      <img class="car-poster light" src="./assets/car-poster-light.webp?v={{V}}" alt="Red GL1F Crypto hypercar, mascot of the crypto AI model builder on GenesisL1" width="1600" height="1000" fetchpriority="high" decoding="async" />
+      <img class="car-poster dark" src="./assets/car-poster-dark.webp?v={{V}}" alt="" width="1600" height="1000" decoding="async" />
+      <div class="car3d" id="car3d" tabindex="0" role="img" aria-label="Interactive 3D model of the red GL1F Crypto hypercar. Drag to spin it; click, tap or press Enter to rev the engine.">
+        <canvas class="car3d-canvas"></canvas>
+        <div class="car3d-hotspots" aria-hidden="true"></div>
+        <p class="car3d-hint" aria-hidden="true"><span>↔ Drag to spin</span><span>💨 Tap to rev</span></p>
+      </div>
+    </div>
+    <p class="car-note" id="car-note" hidden></p>
+  </div>
+</section>
+
+<div class="ticker" aria-label="Popular markets"><div class="ticker-track">{{TICKER}}</div></div>
+
+<section class="section" id="questions">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow rule"><b>01</b><span>/ Questions your Crypto AI model can answer</span></div>
+      <h2>Ask your Crypto AI model, <span class="serif">from majors to the trenches.</span></h2>
+      <p class="lead">Every card opens the studio with the settings filled in. The answer can be “no edge here”, and that is worth knowing before you risk anything.</p>
+    </div>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Example questions" data-tabs>
+    <button type="button" role="tab" id="tab-majors" aria-controls="q-majors" aria-selected="true">Majors</button>
+    <button type="button" role="tab" id="tab-trenches" aria-controls="q-trenches" aria-selected="false" tabindex="-1">The trenches</button>
+    <button type="button" role="tab" id="tab-hl" aria-controls="q-hl" aria-selected="false" tabindex="-1">Hyperliquid</button>
+  </div>
+  <div id="q-majors" role="tabpanel" aria-labelledby="tab-majors" class="grid cards">{{Q_MAJORS}}</div>
+  <div id="q-trenches" role="tabpanel" aria-labelledby="tab-trenches" class="grid cards" hidden>{{Q_TRENCHES}}</div>
+  <div id="q-hl" role="tabpanel" aria-labelledby="tab-hl" class="grid cards" hidden>{{Q_HL}}</div>
+</section>
+
+<section class="section" id="models">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow rule"><b>02</b><span>/ Explore</span></div>
+      <h2>Crypto AI models already <span class="serif">on-chain.</span></h2>
+      <p class="lead">The newest GL1F Crypto AI models, read live from GenesisL1. Open one to see its price, run it on the latest candle and share it.</p>
+    </div>
+    <a class="side-link" href="./market.html">Open the marketplace →</a>
+  </div>
+  <div class="grid cards" id="models-grid" aria-live="polite">
+    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+  </div>
+  <p class="small muted" id="models-note" hidden></p>
+  <div class="models-more"><a class="btn2" href="./market.html#all">View all Crypto AI models →</a></div>
+</section>
+
+<section class="section" id="how">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow rule"><b>03</b><span>/ How it works</span></div>
+      <h2>Five laps to your own <span class="serif">Crypto AI model.</span></h2>
+      <p class="lead">Everything runs in your browser tab. Candles come straight from the exchange’s public API; only deploying sends a transaction.</p>
+    </div>
+    <a class="side-link" href="./app.html">Open the studio →</a>
+  </div>
+  <div class="steps-line">
+    <article class="card"><span class="num">01 · DATASET</span><h3>Fuel up</h3><p>Pull completed candles from Binance, Coinbase or Hyperliquid and turn them into signals and yes/no answers.</p></article>
+    <article class="card"><span class="num">02 · TRAIN</span><h3>Tune the engine</h3><p>Gradient-boosted trees learn from the past and are tested walk-forward on the future.</p></article>
+    <article class="card"><span class="num">03 · BACKTEST</span><h3>Test drive</h3><p>Replay history with fees, slippage and stops: equity curve, drawdown, win rate.</p></article>
+    <article class="card"><span class="num">04 · DEPLOY</span><h3>Get the keys</h3><p>Mint the Crypto AI model as a Crypto AI Model NFT on GenesisL1. Protocol fees are burned by anyone.</p></article>
+    <article class="card"><span class="num">05 · INFERENCE</span><h3>Hit the road</h3><p>Run it on the latest candle or any moment in history, and verify the score on-chain.</p></article>
+  </div>
+</section>
+
+<section class="section" id="monetization">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow rule"><b>04</b><span>/ Model monetization</span></div>
+      <h2>Your Crypto AI model, <span class="serif">your business model.</span></h2>
+      <p class="lead">The owner of a Crypto AI Model NFT is its model admin and decides how it earns. The admin can change it any time, or sell the model on the marketplace; the buyer becomes the new admin.</p>
+    </div>
+    <a class="side-link" href="./market.html">Open the marketplace →</a>
+  </div>
+  <div class="grid four">
+    <article class="card"><span class="num">01 · FREE</span><h3>Open to everyone</h3><p>Anyone can run the model and verify its scores on-chain. Good for reputation, research and teaching.</p></article>
+    <article class="card"><span class="num">02 · TIPS</span><h3>Pay what you like</h3><p>Inference stays open, and users can tip the fee recipient when a model taught them something.</p></article>
+    <article class="card"><span class="num">03 · PAY PER INFERENCE</span><h3>A fee per run</h3><p>Every on-chain inference pays the fee the admin sets, straight to the admin's fee recipient.</p></article>
+    <article class="card"><span class="num">04 · SUBSCRIPTION PLANS</span><h3>Time-based access</h3><p>Sell plans such as 30 days for 1 L1. A subscriber pays once, and their access key runs the model until the plan ends.</p></article>
+  </div>
+  <div class="grid two" style="margin-top: var(--s4)">
+    <article class="card soft"><h3>Crypto AI model marketplace</h3><p>List your Crypto AI Model NFT at your price, buy someone else's, or cancel a listing. A sale moves the NFT and, with it, the admin rights: access, fees and subscription plans.</p><div class="card-actions"><a class="btn2" href="./market.html">Browse the marketplace</a></div></article>
+    <article class="card soft"><h3>Who gets paid</h3><p>Inference fees, tips, subscriptions and sale prices go to the model admin or seller. Protocol fees (creation, per-byte storage, listing) are burned by anyone and can never be withdrawn.</p><div class="card-actions"><a class="btn2" href="./docs.html#monetization">How it works</a></div></article>
+  </div>
+</section>
+
+<section class="section" id="machine">
+  <div class="grid two" style="align-items:start; gap: clamp(24px, 4vw, 72px)">
+    <div>
+      <div class="eyebrow rule"><b>05</b><span>/ The machine</span></div>
+      <h2>GenesisL1 EVM <span class="serif">is your quant.</span></h2>
+      <p class="lead" style="margin-top:24px">Your Crypto AI model is a GL1F gradient-boosted tree ensemble whose integer inference returns exactly the same score in your browser and inside the EVM. GenesisL1, an EVM Layer 1 live since 2021, stores it, prices it and runs it, so anyone can recompute a prediction on-chain. JavaScript, Python and C++ trainers emit identical Crypto AI model cores on the published test matrix. The chain does the quant work; you ask the questions.</p>
+      <a class="btn" href="./docs.html#contracts">See the contracts</a>
+    </div>
+    <dl class="spec">
+      <div class="spec-row"><dt>Engine</dt><dd class="v">GL1F integer trees</dd><dd class="muted">Same integer score in your browser and the EVM.</dd></div>
+      <div class="spec-row"><dt>Chassis</dt><dd class="v">GenesisL1 · chain 29</dd><dd class="muted">EVM Layer 1 since 2021.</dd></div>
+      <div class="spec-row"><dt>Fuel</dt><dd class="v">Completed candles</dd><dd class="muted">Binance and Hyperliquid perpetuals, Coinbase spot. Never the candle still forming.</dd></div>
+      <div class="spec-row"><dt>Transmission</dt><dd class="v">Walk-forward validation</dd><dd class="muted">Train on the past, test on the next slice of time. 2 to 20 folds, your call.</dd></div>
+      <div class="spec-row"><dt>Brakes</dt><dd class="v">Backtest with costs</dd><dd class="muted">Fees, slippage, stops. Most “amazing” Crypto AI models stop here. That’s the point.</dd></div>
+      <div class="spec-row"><dt>Keys</dt><dd class="v">Crypto AI Model NFT</dd><dd class="muted">Your Crypto AI model, your token: free, tips, pay per inference or subscription plans. The owner is the model admin.</dd></div>
+      <div class="spec-row"><dt>Exhaust</dt><dd class="v">Burned fees</dd><dd class="muted">Creation, per-byte and listing fees go to 0x…dEaD. Anyone can press the button.</dd></div>
+    </dl>
+  </div>
+  <div class="stat-band" style="margin-top: clamp(48px, 6vw, 96px)">
+    <div><b>29</b><span>Chain id</span></div>
+    <div><b>274</b><span>Causal signals</span></div>
+    <div><b>3</b><span>Exchanges</span></div>
+    <div><b>2–20</b><span>Walk-forward folds</span></div>
+    <div><b>0</b><span>Withdrawable fees</span></div>
+  </div>
+</section>
+
+<section class="section" id="learn">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow rule"><b>06</b><span>/ Learn</span></div>
+      <h2>AI for crypto traders, <span class="serif">in five minutes.</span></h2>
+      <p class="lead">Six ideas that separate a useful Crypto AI model from a pretty chart. The studio explains each one again, right where you need it.</p>
+    </div>
+  </div>
+  <div class="grid three">
+    <article class="card soft"><h3>Features are the eyes</h3><p>Signals the Crypto AI model can see at each candle: recent returns, volatility, volume surges, funding, how BTC is moving. Only past data, never the future.</p></article>
+    <article class="card soft"><h3>The label is the question</h3><p>For every candle: did price hit your target before your stop, within your window? 1 or 0. The Crypto AI model learns to estimate that probability.</p></article>
+    <article class="card soft"><h3>Trees vote together</h3><p>Hundreds of small decision trees each fix the mistakes of the ones before. Together they form a probability, not a promise.</p></article>
+    <article class="card soft"><h3>Overfitting is the enemy</h3><p>A Crypto AI model that memorised last month looks brilliant on last month and useless tomorrow. Early stopping and simple settings fight it.</p></article>
+    <article class="card soft"><h3>Test on the future</h3><p>Walk-forward validation trains on the past and tests on what came next. Shuffling time together flatters the Crypto AI model and fools you.</p></article>
+    <article class="card soft"><h3>70% means wrong 3 in 10</h3><p>Probabilities are frequencies, not certainties. After fees, a small edge can vanish entirely. The backtest tells you whether it did.</p></article>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow rule"><b>07</b><span>/ FAQ</span></div>
+      <h2>Questions about <span class="serif">crypto AI.</span></h2>
+    </div>
+  </div>
+  <div class="faq">{{FAQ}}</div>
+</section>
+
+<section class="section" id="disclaimer">
+  <div class="disclaimer" role="note" aria-labelledby="disc-title">
+    <h2 id="disc-title">Read this before you touch anything.</h2>
+    <ul>
+      <li><strong>Open, experimental data-science software for education and research only.</strong> It is not a trading product, a signal service, a broker or an adviser.</li>
+      <li><strong>No investment advice.</strong> Nothing here is financial, investment, trading, legal or tax advice, or a recommendation to buy, sell or hold any asset.</li>
+      <li><strong>Trading crypto carries serious risk,</strong> including the loss of everything you put in. Leverage multiplies losses. Memecoins can go to zero in minutes.</li>
+      <li><strong>Crypto AI models and backtests can be wrong,</strong> overfit, stale or broken. Past performance does not predict future results. A backtest is a simulation, not a record of real trades.</li>
+      <li><strong>Do not use these Crypto AI models in live trading,</strong> bots, copy-trading or any automated setup.</li>
+      <li><strong>No warranty of any kind.</strong> The software, website, smart contracts, Crypto AI models and data are provided “as is” and “as available”, without warranty of any kind, express or implied, including merchantability, fitness for a particular purpose, accuracy, availability and non-infringement.</li>
+      <li><strong>Bugs, errors and imperfections.</strong> This software may contain bugs, errors, defects, inaccuracies and other imperfections, and may not work as described. The smart contracts are not audited. Market data comes from third parties and may be wrong, delayed or incomplete.</li>
+      <li><strong>No liability.</strong> To the fullest extent permitted by law, the authors, contributors and affiliated parties are not liable for any loss or damage of any kind, including lost funds or profits, arising from the use of, or inability to use, the software or its results.</li>
+      <li><strong>On-chain actions are permanent.</strong> Deploying a Crypto AI model is a public transaction; fees are burned and never refunded.</li>
+    </ul>
+    <p class="small" style="margin:0">You are solely responsible for your decisions and for complying with the laws of your jurisdiction. Exchange names identify public data sources only; GL1F Crypto is not affiliated with Binance, Coinbase or Hyperliquid.</p>
+  </div>
+</section>

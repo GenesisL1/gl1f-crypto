@@ -1,0 +1,38 @@
+<div class="app-head">
+  <div>
+    <div class="eyebrow"><span class="status">Marketplace</span><span>Crypto AI Model NFTs · GenesisL1 EVM</span></div>
+    <h1>Crypto AI model <span class="serif hype-text">marketplace.</span></h1>
+    <p>Buy, sell and subscribe to Crypto AI models. Every model is an NFT, and its owner is the model admin who sets access, fees and subscription plans.</p>
+  </div>
+  <div class="row wrap"><span class="pill" id="mk-wallet">Not connected</span><button class="btn" type="button" id="mk-connect">Connect wallet</button><button class="change-wallet" type="button" data-change-wallet hidden>Change wallet</button></div>
+</div>
+<div class="alert info" id="mk-mode" hidden></div>
+<p class="fineprint"><span aria-hidden="true">⚠</span><span><strong>Educational, experimental software.</strong> Not investment advice. A Crypto AI model, a subscription or an NFT purchase does not make trading profitable, and blockchain transactions are final. Provided “as is”, without warranty of any kind; it may contain bugs, errors and imperfections. <a href="./docs.html#disclaimer">Full disclaimer</a>.</span></p>
+
+<div class="grid three rules-grid">
+  <article class="card soft"><span class="num">MODEL ADMIN</span><h3>The owner decides</h3><p>The address holding the Crypto AI Model NFT is the model admin. It decides who can run the model and what it costs (free, tips or paid), the fee per inference, the fee recipient and the subscription plans. It can pause inference and list the model for sale. When the NFT changes hands, the buyer becomes the admin. Its license can be opened up later, never made stricter.</p></article>
+  <article class="card soft"><span class="num">CREATOR INCOME</span><h3>Paid to the admin</h3><p>Inference fees, tips and subscription payments go straight to the admin's fee recipient, and follow the NFT to its new owner after a sale; the sale price goes to the seller. None of it passes through GL1F or is burned.</p></article>
+  <article class="card soft"><span class="num">PROTOCOL FEES</span><h3>Burned by anyone</h3><p>Model creation, per-byte storage and listing fees stay in the contracts, and any address can burn them to 0x…dEaD with one public call. Nobody, including the deployer, can withdraw them.</p></article>
+</div>
+
+<div class="tabs" role="tablist" aria-label="Marketplace" data-tabs>
+  <button type="button" role="tab" id="mk-tab-sale" aria-controls="mk-sale" aria-selected="true">For sale</button>
+  <button type="button" role="tab" id="mk-tab-all" aria-controls="mk-all" aria-selected="false" tabindex="-1">All Crypto AI models</button>
+  <button type="button" role="tab" id="mk-tab-mine" aria-controls="mk-mine" aria-selected="false" tabindex="-1">My models</button>
+</div>
+<div id="mk-sale" role="tabpanel" aria-labelledby="mk-tab-sale">
+  <div class="grid cards" id="mk-sale-grid" aria-live="polite"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+  <p class="small muted" id="mk-sale-note" hidden></p>
+  <nav class="pager" id="mk-sale-pager" aria-label="Pages of models for sale" hidden></nav>
+</div>
+<div id="mk-all" role="tabpanel" aria-labelledby="mk-tab-all" hidden>
+  <div class="grid cards" id="mk-all-grid" aria-live="polite"></div>
+  <p class="small muted" id="mk-all-note" hidden></p>
+  <nav class="pager" id="mk-all-pager" aria-label="Pages of models" hidden></nav>
+</div>
+<div id="mk-mine" role="tabpanel" aria-labelledby="mk-tab-mine" hidden>
+  <p class="small muted" id="mk-mine-note">Connect the wallet that owns your Crypto AI models to manage them here.</p>
+  <div class="grid cards" id="mk-mine-grid" aria-live="polite"></div>
+  <nav class="pager" id="mk-mine-pager" aria-label="Pages of your models" hidden></nav>
+</div>
+

@@ -1,0 +1,557 @@
+<div class="app-head">
+  <div>
+    <div class="eyebrow"><span class="status">Studio</span><span>Five steps · everything runs in this tab</span></div>
+    <h1>Build a Crypto AI model <span class="serif hype-text">in five laps.</span></h1>
+    <p>Every field has a <span class="help" aria-hidden="true">?</span> with a plain-language explanation. Educational software, not financial advice.</p>
+  </div>
+  <div class="alert info" id="restore-bar" hidden><span id="restore-text">Restored your last session.</span> <button class="btn2" type="button" id="restore-clear">Start fresh</button></div>
+</div>
+<div class="stepper">
+  <div class="stepper-inner" id="steps" role="tablist" aria-label="Pipeline steps">
+    <button class="create-tab active" id="tab-dataset" role="tab" aria-selected="true" aria-controls="panel-dataset" data-step="dataset" type="button"><span class="step"><span>01</span></span><span class="tab-text"><span class="tab-title">Dataset</span><span class="tab-sub" id="sub-dataset">Candles &amp; question</span></span></button>
+    <button class="create-tab" id="tab-train" role="tab" aria-selected="false" aria-controls="panel-train" data-step="train" type="button" tabindex="-1"><span class="step"><span>02</span></span><span class="tab-text"><span class="tab-title">Train</span><span class="tab-sub" id="sub-train">No dataset yet</span></span></button>
+    <button class="create-tab" id="tab-backtest" role="tab" aria-selected="false" aria-controls="panel-backtest" data-step="backtest" type="button" tabindex="-1"><span class="step"><span>03</span></span><span class="tab-text"><span class="tab-title">Backtest</span><span class="tab-sub" id="sub-backtest">No Crypto AI model yet</span></span></button>
+    <button class="create-tab" id="tab-deploy" role="tab" aria-selected="false" aria-controls="panel-deploy" data-step="deploy" type="button" tabindex="-1"><span class="step"><span>04</span></span><span class="tab-text"><span class="tab-title">Deploy</span><span class="tab-sub" id="sub-deploy">Crypto AI Model NFT</span></span></button>
+    <button class="create-tab" id="tab-infer" role="tab" aria-selected="false" aria-controls="panel-infer" data-step="infer" type="button" tabindex="-1"><span class="step"><span>05</span></span><span class="tab-text"><span class="tab-title">Inference</span><span class="tab-sub" id="sub-infer">Any Crypto AI model</span></span></button>
+  </div>
+</div>
+<div class="app-main">
+<section class="panel" id="panel-dataset" role="tabpanel" aria-labelledby="tab-dataset" data-panel="dataset">
+<div class="panel-head"><div><div class="eyebrow"><b>01</b> / Dataset</div><h2>Turn candles into <span class="serif">a question.</span></h2><p>Pick a market and what counts as a win. Each row is one completed candle.</p></div></div>
+<div class="split">
+<div>
+<div class="block">
+<h3 data-help="ds.exchange"><span class="n">A</span> Market</h3>
+<div class="seg" id="ds-exchange" role="radiogroup" aria-label="Exchange">
+<button type="button" role="radio" aria-checked="true" data-value="binance">Binance USD-M</button>
+<button type="button" role="radio" aria-checked="false" data-value="coinbase">Coinbase</button>
+<button type="button" role="radio" aria-checked="false" data-value="hyperliquid">Hyperliquid</button>
+</div>
+<div class="fpairs">
+<div class="fpair"><div class="field"><label for="ds-market" data-help="ds.market">Market</label><input id="ds-market" list="ds-markets" value="ETH" autocomplete="off" spellcheck="false" /><datalist id="ds-markets"></datalist><small class="hint" id="ds-market-hint">ETHUSDT perpetual</small><div class="chips" id="ds-chips" aria-label="Popular markets"></div></div><div class="field"><label for="ds-candle" data-help="ds.candle">Candle</label><select id="ds-candle"><option>1m</option><option>3m</option><option>5m</option><option selected>15m</option><option>30m</option><option>1h</option><option>2h</option><option>4h</option><option>6h</option><option>8h</option><option>12h</option><option>1d</option></select><small class="hint" id="ds-candle-hint">&nbsp;</small></div></div>
+<div class="fpair"><div class="field"><label for="ds-start" data-help="ds.start">Start · UTC</label><input id="ds-start" type="date" /></div><div class="field"><label for="ds-end" data-help="ds.end">End · UTC</label><input id="ds-end" type="date" /></div></div>
+</div>
+</div>
+<div class="block">
+<h3 data-help="ds.label"><span class="n">B</span> The question</h3>
+<div class="fgrid">
+<div class="field"><span class="label" id="ds-direction-label" data-help="ds.direction">Direction</span><div class="seg compact" id="ds-direction" role="radiogroup" aria-labelledby="ds-direction-label"><button type="button" role="radio" aria-checked="true" data-value="up">Up</button><button type="button" role="radio" aria-checked="false" data-value="down">Down</button></div></div>
+<div class="field"><label for="ds-ema" data-help="ds.ema">EMA baseline</label><input id="ds-ema" type="number" min="1" max="200" step="1" value="5" /></div>
+<div class="field"><label for="ds-move" data-help="ds.move">Target %</label><input id="ds-move" type="number" min="0.01" step="0.1" value="1" /></div>
+<div class="field"><label for="ds-retrace" data-help="ds.stop">Stop %</label><input id="ds-retrace" type="number" min="0" max="99" step="0.1" value="0.5" /></div>
+<div class="field"><label for="ds-horizon" data-help="ds.horizon">Horizon</label><div class="inline"><input id="ds-horizon" type="number" min="1" step="1" value="5" /><select id="ds-horizon-unit" aria-label="Horizon unit"><option value="minutes">min</option><option value="hours" selected>hours</option><option value="days">days</option><option value="bars">candles</option></select></div></div>
+</div>
+<div class="chart" id="ds-label-chart" aria-live="polite"></div>
+<p class="formula" id="ds-formula"></p>
+</div>
+<div class="block">
+<h3 data-help="ds.preset"><span class="n">C</span> Signals</h3>
+<div class="seg" id="ds-preset" role="radiogroup" aria-label="Feature preset">
+<button type="button" role="radio" aria-checked="false" data-value="small">Small <span class="count" data-count="small"></span></button>
+<button type="button" role="radio" aria-checked="true" data-value="optimal">Optimal <span class="count" data-count="optimal"></span></button>
+<button type="button" role="radio" aria-checked="false" data-value="exotic">Exotic <span class="count" data-count="exotic"></span></button>
+<button type="button" role="radio" aria-checked="false" data-value="full">Full <span class="count" data-count="full"></span></button>
+<button type="button" role="radio" aria-checked="false" data-value="all">All <span class="count" data-count="all"></span></button>
+</div>
+<details class="detailsCard" id="ds-custom">
+<summary><span data-help="ds.features">Customize signals</span><span class="sumHint" id="ds-selected">—</span></summary>
+<div class="row wrap feature-tools"><input id="ds-search" type="search" placeholder="Search signals" aria-label="Search signals" /><button class="btn2" type="button" id="ds-select-shown">Select shown</button><button class="btn2" type="button" id="ds-clear-shown">Clear shown</button></div>
+<div class="fgroups" id="ds-groups"></div>
+<p class="muted small" id="ds-unavailable"></p>
+</details>
+</div>
+</div>
+<aside class="side">
+<div class="recipe-card">
+<h3 data-help="ds.recipe">Recipe</h3>
+<div class="kv" id="ds-recipe"></div>
+<div class="plan-line" style="margin-top:14px"><span class="muted small" id="ds-plan">Estimating…</span></div>
+<label class="check" data-help="ds.cache"><input type="checkbox" id="ds-cache" checked /> Reuse cached candles</label>
+<div class="row" style="margin-top:16px"><button class="btn" type="button" id="ds-cancel" hidden>Cancel</button><button class="btn primary" type="button" id="ds-build" style="flex:1">Build dataset</button></div>
+</div>
+<p class="xsmall muted">Candles come straight from the exchange. Nothing is uploaded.</p>
+</aside>
+</div>
+<div class="run" id="ds-run" hidden><div class="run-top"><strong id="ds-stage">Starting</strong><span class="mono" id="ds-pct">0%</span></div><div class="progress" role="progressbar" aria-label="Dataset build" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="ds-progress"><div class="bar" id="ds-bar"></div></div><p class="muted small" id="ds-message"></p></div>
+<div class="alert" id="ds-error" role="alert" hidden></div>
+<div class="result" id="ds-result" hidden>
+<div class="result-head"><h3>Dataset ready</h3><span class="mono small" id="ds-filename"></span></div>
+<div class="stat-grid" id="ds-stats"></div>
+<div class="chart"><div class="label" data-help="ds.chart">Price &amp; where the answer was yes</div><div id="ds-chart"></div></div>
+<p class="muted small" id="ds-notes"></p>
+<details class="detailsCard"><summary><span>Preview</span><span class="sumHint">First rows</span></summary><div class="table-scroll"><table class="tbl" id="ds-preview"></table></div></details>
+<div class="next-grid two">
+<div class="next-card"><h3>Download</h3><p>CSV with its input profile for any GL1F trainer.</p><div class="row wrap"><button class="btn" type="button" id="ds-download-csv">Download CSV</button><button class="btn2" type="button" id="ds-download-profile">Profile JSON</button></div></div>
+<div class="next-card accent"><h3>Train</h3><p>Continue with this dataset. Nothing leaves the browser.</p>
+<div class="card-actions"><button class="btn primary" type="button" id="ds-to-train">Continue to training</button></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="panel" id="panel-train" role="tabpanel" aria-labelledby="tab-train" data-panel="train" hidden>
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow"><b>02</b> / Train</div><h2>Teach the Crypto AI model, <span class="serif">test it on the future.</span></h2>
+              <p class="muted">Gradient-boosted trees with chronological validation and a locked final test.</p>
+            </div>
+          </div>
+
+          <div class="empty" id="tr-empty">
+            <p><strong>No dataset yet.</strong> Build one in step 1, or use a dataset CSV.</p>
+            <div class="row wrap">
+              <button class="btn primary" type="button" data-goto="dataset">Build a dataset</button>
+              <label class="btn file">Use a CSV file<input type="file" id="tr-file" accept=".csv,text/csv" /></label>
+            </div>
+            <p class="muted small">Select the CSV together with its profile JSON to keep inference exact.</p>
+          </div>
+
+          <div id="tr-ready" hidden>
+            <div class="source-bar">
+              <div>
+                <strong id="tr-source-title">—</strong>
+                <span class="muted small" id="tr-source-sub"></span>
+              </div>
+              <label class="btn2 file">Use another file<input type="file" id="tr-file-2" accept=".csv,text/csv,.json,application/json" multiple /></label>
+            </div>
+
+            <div class="block">
+              <h3 data-help="tr.validation"><span class="n">A</span> Validation</h3>
+              <div class="fgrid">
+                <div class="field">
+                  <label for="tr-validation" data-help="tr.validation">Strategy</label>
+                  <select id="tr-validation">
+                    <option value="walk_forward" selected>Walk-forward</option>
+                    <option value="chronological">Chronological holdout</option>
+                    <option value="random">Shuffled split</option>
+                  </select>
+                </div>
+                <div class="field" data-wf><label for="tr-folds" data-help="tr.folds">Folds</label><input id="tr-folds" type="number" min="2" max="20" step="1" value="5" inputmode="numeric" /></div>
+                <div class="field" data-wf><label for="tr-window" data-help="tr.window">Window</label><select id="tr-window"><option value="expanding" selected>Expanding</option><option value="rolling">Rolling</option></select></div>
+                <div class="field" data-wf><label for="tr-initial" data-help="tr.initial">First window %</label><input id="tr-initial" type="number" min="20" max="80" step="5" value="40" inputmode="numeric" /></div>
+                <div class="field"><label for="tr-testpct" data-help="tr.testpct">Final test %</label><input id="tr-testpct" type="number" min="5" max="40" step="1" value="15" inputmode="numeric" /></div>
+              </div>
+              <p class="muted small" id="tr-plan"></p>
+            </div>
+
+            <div class="block">
+              <h3 data-help="tr.trees"><span class="n">B</span> Crypto AI model</h3>
+              <div class="fgrid">
+                <div class="field"><label for="tr-trees" data-help="tr.trees">Trees</label><input id="tr-trees" type="number" min="10" max="5000" step="10" value="300" /></div>
+                <div class="field"><label for="tr-depth" data-help="tr.depth">Depth</label><input id="tr-depth" type="number" min="1" max="12" step="1" value="5" /></div>
+                <div class="field"><label for="tr-lr" data-help="tr.lr">Learning rate</label><input id="tr-lr" type="number" min="0.001" max="1" step="0.005" value="0.05" /></div>
+                <div class="field"><label for="tr-minleaf" data-help="tr.minleaf">Min leaf</label><input id="tr-minleaf" type="number" min="1" max="5000" step="1" value="40" /></div>
+              </div>
+              <details class="detailsCard">
+                <summary><span>Advanced</span><span class="sumHint" id="tr-advanced-hint">Quantile · 64 bins · patience 30</span></summary>
+                <div class="fgrid">
+                  <div class="field"><label for="tr-bins" data-help="tr.bins">Split bins</label><input id="tr-bins" type="number" min="8" max="512" step="8" value="64" /></div>
+                  <div class="field"><label for="tr-binning" data-help="tr.binning">Binning</label><select id="tr-binning"><option value="quantile" selected>Quantile</option><option value="linear">Linear</option></select></div>
+                  <div class="field"><label for="tr-weights" data-help="tr.weights">Class weights</label><select id="tr-weights"><option value="none" selected>None</option><option value="auto">Balanced</option></select></div>
+                  <div class="field"><label for="tr-seed" data-help="tr.seed">Seed</label><input id="tr-seed" type="number" min="0" max="2147483647" step="1" value="42" /></div>
+                </div>
+                <h4 class="adv-h">Early stopping</h4>
+                <div class="fgrid">
+                  <div class="field"><label for="tr-patience" data-help="tr.patience">Patience (trees)</label><input id="tr-patience" type="number" min="1" max="500" step="1" value="30" /></div>
+                  <div class="field"><label for="tr-metric" data-help="tr.metric">Watch</label><select id="tr-metric"><option value="logloss" selected>Log-loss</option><option value="brier">Brier score</option><option value="balanced_accuracy">Balanced accuracy</option><option value="f1">F1</option></select></div>
+                </div>
+                <label class="check"><input type="checkbox" id="tr-earlystop" checked /> <span data-help="tr.earlystop">Stop adding trees when validation stops improving</span></label>
+                <h4 class="adv-h">Learning-rate schedule</h4>
+                <div class="fgrid">
+                  <div class="field"><label for="tr-lrsched" data-help="tr.lrsched">Schedule</label><select id="tr-lrsched"><option value="constant" selected>Constant</option><option value="plateau">Cut on plateau</option><option value="piecewise">Piecewise by tree</option></select></div>
+                  <div class="field" data-lr="plateau" hidden><label for="tr-lr-wait">Wait (trees)</label><input id="tr-lr-wait" type="number" min="1" max="500" step="1" value="15" /></div>
+                  <div class="field" data-lr="plateau" hidden><label for="tr-lr-drop">Cut by (%)</label><input id="tr-lr-drop" type="number" min="5" max="95" step="5" value="50" /></div>
+                  <div class="field" data-lr="plateau" hidden><label for="tr-lr-min">Lowest rate</label><input id="tr-lr-min" type="number" min="0.00001" max="1" step="0.0005" value="0.0025" /></div>
+                </div>
+                <div class="field" data-lr="piecewise" hidden><label for="tr-lr-pieces" data-help="tr.lrpieces">Rate by tree range</label><textarea id="tr-lr-pieces" rows="3" spellcheck="false" placeholder="1-100 0.1&#10;101-200 0.05&#10;201-300 0.01"></textarea>
+                  <div class="row"><button class="btn2" type="button" id="tr-lr-example">Example</button><button class="btn2" type="button" id="tr-lr-clear">Clear</button></div></div>
+                <label class="check"><input type="checkbox" id="tr-refit" checked /> Refit on all development data before the final test</label>
+              </details>
+              <p class="muted small" id="tr-size"></p>
+            </div>
+
+            <div class="block">
+              <h3 data-help="tr.search"><span class="n">C</span> Search &amp; live view <span class="tag blue">optional</span></h3>
+              <div class="fgrid">
+                <div class="field"><label class="check" style="margin:0" data-help="tr.search"><input type="checkbox" id="tr-search-on" /> Heuristic search</label><span class="hint">Tries settings around the best so far and keeps the lowest validation loss.</span></div>
+                <div class="field"><label for="tr-rounds" data-help="tr.rounds">Candidates</label><input id="tr-rounds" type="number" min="2" max="200" step="1" value="12" inputmode="numeric" disabled /></div>
+                <div class="field"><label class="check" style="margin:0" data-help="tr.live"><input type="checkbox" id="tr-live-on" checked /> Live training chart</label><span class="hint">Train and validation loss, tree by tree.</span></div>
+              </div>
+              <p class="muted small" id="tr-search-plan"></p>
+            </div>
+
+            <div class="actions-bar">
+              <span class="pill" id="tr-pill">Ready</span>
+              <div class="row">
+                <button class="btn" type="button" id="tr-stop" hidden>Stop</button>
+                <button class="btn primary" type="button" id="tr-train">Train Crypto AI model</button>
+              </div>
+            </div>
+
+            <div class="run" id="tr-run" hidden>
+              <div class="run-top"><strong id="tr-stage">Starting</strong><span class="mono" id="tr-pct">0%</span></div>
+              <div class="progress" role="progressbar" aria-label="Training" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="tr-progress"><div class="bar" id="tr-bar"></div></div>
+            </div>
+            <div class="chart live-chart" id="tr-live-box" hidden>
+              <div class="run-top"><strong class="small" id="tr-live-caption">Live training</strong><span class="xsmall muted">log-loss by tree</span></div>
+              <div id="tr-live" class="curve"></div>
+            </div>
+            <details class="detailsCard" id="tr-search-box" open hidden>
+              <summary><span>Search results</span><span class="sumHint" id="tr-search-hint"></span></summary>
+              <div class="table-scroll"><table class="tbl" id="tr-search-table"></table></div>
+              <div class="row end"><button class="btn2" type="button" id="tr-search-apply" disabled>Use best settings</button></div>
+            </details>
+            <div class="alert" id="tr-error" role="alert" hidden></div>
+
+            <div class="result" id="tr-result" hidden>
+              <div class="result-head">
+                <h3>Crypto AI model ready</h3>
+                <span class="mono small" id="tr-model-id"></span>
+              </div>
+              <div class="save-card" id="tr-save-card">
+                <div class="save-text">
+                  <h3>Save your Crypto AI model</h3>
+                  <p>One <code>.gl1f</code> file holds the trees, the market profile and the validation report. Open it later in Backtest, Inference or Deploy, keep it as a backup, or send it to someone. Until you save it, it lives only in this browser tab's session.</p>
+                </div>
+                <div class="save-actions">
+                  <button class="btn hype lg" type="button" id="tr-export">Save Crypto AI model (.gl1f)</button>
+                  <span class="small muted" id="tr-save-status">Not saved to a file yet</span>
+                </div>
+              </div>
+              <div class="stat-grid" id="tr-stats"></div>
+              <div class="chart-box">
+                <div id="tr-curve" class="curve"></div>
+<div class="grid two" id="tr-scorecard" style="margin-top:14px">
+<div class="card"><div class="label" data-help="tr.confusion">Final test · confusion matrix</div><div id="tr-confusion"></div></div>
+<div class="card"><div class="label" data-help="tr.baseline">Versus doing nothing smart</div><div class="bars" id="tr-baseline"></div></div>
+</div>
+                <p class="muted small">Validation log-loss by tree. The marker is the chosen tree count.</p>
+              </div>
+              <details class="detailsCard">
+                <summary><span>Validation details</span><span class="sumHint" id="tr-folds-hint"></span></summary>
+                <div class="kv" id="tr-kv"></div>
+              </details>
+              <details class="detailsCard" id="tr-fi-box">
+                <summary><span data-help="tr.featurescores">Feature scores</span><span class="sumHint" id="tr-fi-hint">Which signals the model relies on</span></summary>
+                <p class="muted small" id="tr-fi-note"></p>
+                <div class="table-scroll"><table class="tbl fi-table" id="tr-fi"></table></div>
+                <div class="row wrap fi-actions"><label class="check"><input type="checkbox" id="tr-fi-unused" checked /> <span id="tr-fi-unused-label">Also drop the signals the model never used</span></label>
+                  <button class="btn" type="button" id="tr-fi-retrain" disabled>Retrain without unticked signals</button></div>
+              </details>
+              <div class="next-grid three">
+                <div class="next-card accent">
+                  <h3>Deploy</h3>
+                  <p class="muted">Mint it as an NFT on GenesisL1.</p>
+<div class="card-actions"><button class="btn primary" type="button" id="tr-to-deploy">Deploy Crypto AI model</button><button class="btn2" type="button" data-goto="backtest" id="tr-to-backtest">Backtest it</button></div>
+</div>
+                <div class="next-card">
+                  <h3>Run inference</h3>
+                  <p class="muted">Use this Crypto AI model on the latest completed candle.</p>
+<div class="card-actions"><button class="btn" type="button" id="tr-to-infer">Run inference</button></div>
+</div>
+                <div class="next-card">
+                  <h3>Published Crypto AI models</h3>
+                  <p class="muted">Run any Crypto AI model already deployed on GenesisL1.</p>
+<div class="card-actions"><button class="btn" type="button" id="tr-to-published">Browse Crypto AI models</button></div>
+</div>
+              </div>
+            </div>
+          </div>
+        </section>
+<section class="panel" id="panel-backtest" role="tabpanel" aria-labelledby="tab-backtest" data-panel="backtest" hidden>
+<div class="panel-head"><div><div class="eyebrow"><b>03</b> / Backtest</div><h2>Test drive it <span class="serif">on history.</span></h2><p>Replay candles the model never saw: enter when confident, exit at target, stop or timeout, fees both ways.</p></div><span class="pill" id="bt-pill">No Crypto AI model</span></div>
+<div class="empty" id="bt-empty"><p>Train a Crypto AI model first, or pick one in the Inference step and press “Backtest this Crypto AI model”.</p><div class="row wrap"><button class="btn primary" type="button" data-goto="dataset">Start with a dataset</button><button class="btn2" type="button" data-goto="infer">Pick a published Crypto AI model</button></div></div>
+<div id="bt-ready" hidden>
+<div class="source-bar"><div><span class="muted small" data-help="bt.source">Crypto AI model</span><strong id="bt-model-title">—</strong><span class="muted small" id="bt-model-sub"></span></div>
+<div class="seg" id="bt-source" role="radiogroup" aria-label="Model to backtest"><button type="button" role="radio" aria-checked="true" data-value="session">This session</button><button type="button" role="radio" aria-checked="false" data-value="infer">From Inference</button></div></div>
+<div class="block"><h3 data-help="bt.range"><span class="n">A</span> Period &amp; market</h3>
+<div class="seg" id="bt-range" role="radiogroup" aria-label="Backtest period"><button type="button" role="radio" aria-checked="true" data-value="test">Final test period</button><button type="button" role="radio" aria-checked="false" data-value="30">Last 30 days</button><button type="button" role="radio" aria-checked="false" data-value="90">Last 90 days</button><button type="button" role="radio" aria-checked="false" data-value="custom">Custom</button></div>
+<div class="fpairs"><div class="fpair"><div class="field"><label for="bt-start" data-help="ds.start">Start · UTC</label><input id="bt-start" type="date" /></div><div class="field"><label for="bt-end" data-help="ds.end">End · UTC</label><input id="bt-end" type="date" /></div></div><div class="fpair"><div class="field"><label for="bt-market" data-help="bt.market">Market</label><input id="bt-market" autocomplete="off" spellcheck="false" /><small class="hint" id="bt-market-hint">&nbsp;</small></div></div></div>
+<div class="alert warn" id="bt-insample" hidden></div>
+</div>
+<div class="block"><h3 data-help="bt.rules"><span class="n">B</span> Trading rules</h3>
+<div class="fgrid"><div class="field"><label for="bt-threshold" data-help="bt.threshold">Entry threshold</label><input id="bt-threshold" type="number" min="0.01" max="0.99" step="0.01" value="0.5" /></div><div class="field"><label for="bt-fee" data-help="bt.fee">Fee per side %</label><input id="bt-fee" type="number" min="0" max="5" step="0.01" value="0.05" /></div><div class="field"><label for="bt-slip" data-help="bt.slippage">Slippage · bps</label><input id="bt-slip" type="number" min="0" max="500" step="1" value="2" /></div><div class="field"><label for="bt-leverage" data-help="bt.leverage">Leverage</label><select id="bt-leverage"><option value="1" selected>1× (no leverage)</option><option value="2">2×</option><option value="3">3×</option><option value="5">5×</option><option value="10">10×</option><option value="20">20×</option><option value="25">25×</option><option value="50">50×</option><option value="100">100×</option></select><span class="hint" id="bt-liq-hint"></span></div><div class="field"><label for="bt-margin" data-help="bt.margin">Margin per trade %</label><input id="bt-margin" type="number" min="1" max="100" step="1" value="100" inputmode="numeric" /></div><div class="field"><label for="bt-mmr" data-help="bt.mmr">Maintenance margin %</label><input id="bt-mmr" type="number" min="0" max="20" step="0.1" value="0.5" inputmode="decimal" /></div></div>
+<p class="formula" id="bt-rules"></p>
+</div>
+<div class="actions-bar"><span class="muted small" id="bt-plan">—</span><div class="row"><button class="btn" type="button" id="bt-cancel" hidden>Cancel</button><button class="btn primary" type="button" id="bt-run">Run backtest</button></div></div>
+<div class="run" id="bt-run-box" hidden><div class="run-top"><strong id="bt-stage">Starting</strong><span class="mono" id="bt-pct">0%</span></div><div class="progress" role="progressbar" aria-label="Backtest" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bt-progress"><div class="bar" id="bt-bar"></div></div><p class="muted small" id="bt-message"></p></div>
+<div class="alert" id="bt-error" role="alert" hidden></div>
+<div class="result" id="bt-result" hidden>
+<div class="result-head"><h3>Backtest results</h3><span class="mono small" id="bt-period"></span></div>
+<div class="alert warn" id="bt-warn" hidden></div>
+<div class="stat-grid" id="bt-stats"></div>
+<div class="chart"><div class="label" data-help="bt.equity">Equity vs buy &amp; hold</div><div id="bt-equity"></div></div>
+<div class="chart"><div class="label" data-help="bt.price">Trades on price</div><div id="bt-price"></div></div>
+<div class="grid two" style="margin-top:14px"><div class="card"><div class="label">How trades ended</div><div class="bars" id="bt-outcomes"></div></div><div class="card"><div class="label" data-help="bt.sweep">Threshold sensitivity</div><div class="table-scroll"><table class="tbl" id="bt-sweep"></table></div></div></div>
+<details class="detailsCard"><summary><span>Trade log</span><span class="sumHint" id="bt-trades-hint"></span></summary><div class="table-scroll"><table class="tbl" id="bt-trades"></table></div></details>
+<div class="row wrap end"><button class="btn2" type="button" id="bt-download">Download trades CSV</button><button class="btn primary" type="button" data-goto="deploy">Continue to deploy</button></div>
+<p class="xsmall muted" style="margin-top:14px">Simulation only: no orders were placed. Results ignore funding payments, partial fills, liquidity and exchange outages, and past results do not predict future ones. Not investment advice.</p>
+</div>
+</div>
+</section>
+
+<section class="panel" id="panel-deploy" role="tabpanel" aria-labelledby="tab-deploy" data-panel="deploy" hidden>
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow"><b>04</b> / Deploy</div><h2>Mint it. <span class="serif">Burn the fees.</span></h2>
+              <p class="muted">Store it on GenesisL1 and mint its Crypto AI model NFT.</p>
+            </div>
+          </div>
+
+          <div class="empty" id="dp-empty">
+            <p><strong>No Crypto AI model yet.</strong> Train one in step 2, or load a .gl1f package.</p>
+            <div class="row wrap">
+              <button class="btn primary" type="button" data-goto="train">Go to training</button>
+              <label class="btn file">Load .gl1f<input type="file" id="dp-file" accept=".gl1f,application/octet-stream" /></label>
+            </div>
+          </div>
+
+          <div id="dp-ready" hidden>
+<div class="locked" id="dp-locked" hidden><span class="ic" aria-hidden="true">🔒</span><div><p><strong>GL1F Crypto contracts are launching.</strong> Deployment opens when the dedicated crypto registry is live on GenesisL1, with creation and per-byte fees that anyone can burn. Until then you can download your Crypto AI model as a .gl1f file, backtest it and run inference locally.</p><p class="small muted" style="margin-top:6px"><a href="./docs.html#contracts">Contract status</a> · <a href="./docs.html#fees">Fees &amp; burns</a></p></div></div>
+            <div class="source-bar">
+              <div>
+                <strong id="dp-model-title">—</strong>
+                <span class="muted small" id="dp-model-sub"></span>
+              </div>
+              <span class="tag blue" id="dp-model-tag">Local Crypto AI model</span>
+            </div>
+
+            <div class="block">
+              <h3>Listing</h3>
+              <div class="listing">
+                <div class="icon-edit">
+                  <img id="dp-icon" width="96" height="96" alt="Model icon preview" />
+                  <label class="btn2 file">Replace icon<input type="file" id="dp-icon-file" accept="image/png" /></label>
+                </div>
+                <div class="listing-fields">
+                  <div class="field"><label for="dp-title" data-help="dp.name">Name</label><input id="dp-title" maxlength="80" autocomplete="off" /></div>
+                  <div class="field"><label for="dp-desc" data-help="dp.desc">Description</label><textarea id="dp-desc" rows="3" maxlength="600"></textarea></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="block" id="dp-license-block">
+              <h3 data-help="dp.license">License</h3>
+              <p class="muted small">Its bytes are public on GenesisL1; the license decides what others may lawfully do with them.</p>
+              <div class="fgrid">
+                <div class="field"><label for="dp-license-select">License</label><select id="dp-license-select"></select></div>
+              </div>
+              <div class="license-note" id="dp-license-note" aria-live="polite"></div>
+            </div>
+
+            <div class="block" id="dp-trust">
+              <h3 data-help="dp.report">Track record and privacy</h3>
+              <label class="check"><input type="checkbox" id="dp-report-on" checked /> <span>Publish the training report on-chain</span></label>
+              <div class="kv" id="dp-report"></div>
+              <p class="muted small" id="dp-report-note" aria-live="polite"></p>
+              <label class="check"><input type="checkbox" id="dp-private" /> <span data-help="dp.private">Keep internals private</span></label>
+            </div>
+
+            <div class="block" id="dp-monetization">
+              <h3 data-help="dp.monetization">Model monetization</h3>
+              <p class="admin-note"><strong>You are the model admin.</strong> Whoever owns this Crypto AI Model NFT decides who can run it and what it costs: free, tips or paid, the per-inference fee, the fee recipient and subscription plans. The admin can change these at any time on the marketplace page, and if the NFT is sold the buyer becomes the new admin. Creator income goes to the fee recipient and follows the NFT if it is sold; protocol fees are burned, never kept.</p>
+              <div class="fgrid">
+                <div class="field">
+                  <label for="dp-pricing" data-help="dp.access">Access</label>
+                  <select id="dp-pricing"><option value="0" selected>Free: anyone can run it</option><option value="1">Tips: optional payment</option><option value="2">Paid: per inference or subscription</option></select>
+                </div>
+                <div class="field" id="dp-fee-field" hidden><label for="dp-fee" data-help="dp.fee">Fee · L1</label><input id="dp-fee" type="number" min="0.001" max="1" step="0.001" value="0.01" /></div>
+                <div class="field" id="dp-recipient-field" hidden><label for="dp-recipient" data-help="dp.recipient">Fee recipient</label><input id="dp-recipient" placeholder="Connected wallet" autocomplete="off" spellcheck="false" /></div>
+              </div>
+              <div id="dp-plans" hidden>
+                <h4 class="sub-h" data-help="dp.plans">Subscription plans</h4>
+                <p class="muted small">Pay once for access that lasts the plan's duration. Up to 8 plans.</p>
+                <div class="plan-list" id="dp-plan-list"></div>
+                <div class="row wrap"><button class="btn2" type="button" id="dp-plan-add">Add plan</button><span class="muted small" id="dp-plan-hint"></span></div>
+              </div>
+            </div>
+
+            <div class="block">
+              <h3 data-help="dp.key">Owner key</h3>
+              <p class="muted small">Authorizes owner inference calls. Only its address is stored on-chain.</p>
+              <div class="row wrap">
+                <button class="btn2" type="button" id="dp-key-generate">Generate owner key</button>
+                <span class="mono small" id="dp-key-address">—</span>
+                <button class="btn2" type="button" id="dp-key-download" disabled>Download key file</button>
+              </div>
+              <label class="check"><input type="checkbox" id="dp-key-saved" /> I saved the owner key file</label>
+            </div>
+
+            <div class="block">
+              <h3>Transactions</h3>
+              <div class="kv" id="dp-cost" data-help="dp.cost"></div>
+              <label class="check"><input type="checkbox" id="dp-terms" /> <span>I accept the <a href="./legal/terms.html" target="_blank" rel="noopener">Terms of Service</a> and publish this Crypto AI model NFT under <span id="dp-license">the selected license</span></span></label>
+              <div class="actions-bar">
+                <span class="pill" id="dp-pill">Connect a wallet</span><button class="change-wallet" type="button" data-change-wallet hidden>Change wallet</button>
+                <button class="btn primary" type="button" id="dp-deploy" disabled>Deploy Crypto AI model</button>
+              </div>
+              <ol class="tx-list" id="dp-steps" hidden></ol>
+            </div>
+            <div class="alert" id="dp-error" role="alert" hidden></div>
+
+            <div class="result" id="dp-result" hidden>
+              <div class="result-head">
+                <h3 id="dp-result-title">Deployed</h3>
+                <span class="mono small" id="dp-result-id"></span>
+              </div>
+              <div class="next-grid two">
+                <div class="next-card accent">
+                  <h3>Run inference</h3>
+                  <p class="muted">Replay the latest candle and verify the output on-chain.</p>
+<div class="card-actions"><button class="btn primary" type="button" id="dp-to-infer">Run inference</button></div>
+</div>
+                <div class="next-card">
+                  <h3>Share your Crypto AI model</h3>
+                  <p class="muted">Its own page. Paste the link anywhere.</p>
+                  <input class="share-link" id="dp-share-url" readonly value="" aria-label="Share link for this Crypto AI model" />
+<div class="card-actions"><button class="btn primary" type="button" id="dp-share" data-share>Share</button><a class="btn2" id="dp-open" href="./market.html" target="_blank" rel="noopener">Open model page</a></div>
+</div>
+              </div>
+            </div>
+          </div>
+        </section>
+<section class="panel" id="panel-infer" role="tabpanel" aria-labelledby="tab-infer" data-panel="infer" hidden>
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow"><b>05</b> / Inference</div><h2>Ask the Crypto AI model <span class="serif">right now.</span></h2>
+              <p class="muted">Run a model on the latest completed candle, or on any moment in history. <a href="./api.html">Or call it from code: Web3 API</a>.</p>
+            </div>
+          </div>
+
+          <div class="seg source-tabs" id="in-source" data-help-target="in.source" role="radiogroup" aria-label="Model source">
+            <button type="button" role="radio" aria-checked="true" data-value="crypto">GL1F Crypto AI models</button><button type="button" role="radio" aria-checked="false" data-value="session">This session</button>
+          </div>
+
+          <div id="in-src-session" class="source-pane" hidden>
+            <div class="empty" id="in-session-empty">
+              <p><strong>No Crypto AI model in this session.</strong> Train one, or choose a published Crypto AI model.</p>
+              <div class="row wrap">
+                <button class="btn" type="button" data-goto="train">Go to training</button>
+                <button class="btn primary" type="button" data-source="published">Browse published Crypto AI models</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="in-src-published" class="source-pane">
+            <div class="list-tools">
+              <span class="muted small" id="in-list-status"></span>
+              <button class="btn2" type="button" id="in-refresh">Refresh</button>
+            </div>
+            <div class="model-list" id="in-list" role="list"></div>
+            <nav class="pager" id="in-pager" aria-label="Pages of models" hidden></nav>
+          </div>
+
+          <div id="in-src-file" class="source-pane" hidden>
+            <label class="drop" id="in-drop">
+              <input type="file" id="in-file" accept=".gl1f,application/octet-stream" />
+              <strong>Choose a .gl1f package</strong>
+              <span class="muted small">Packages exported from this pipeline include their input profile.</span>
+            </label>
+          </div>
+
+          <div id="in-model" hidden>
+            <div class="source-bar">
+              <div>
+                <strong id="in-model-title">—</strong>
+                <span class="muted small" id="in-model-sub"></span>
+              </div>
+              <span class="tag" id="in-model-tag">—</span><button class="btn2" type="button" id="in-to-backtest" hidden>Backtest this Crypto AI model</button>
+            </div>
+            <div class="kv" id="in-profile-kv"></div>
+            <details class="detailsCard" id="in-report" hidden>
+              <summary><span data-help="in.report">Verified track record</span><span class="sumHint" id="in-report-hint">Published at mint</span></summary>
+              <div class="kv" id="in-report-kv"></div>
+              <div class="row"><button class="btn2" type="button" id="in-report-verify">Verify with on-chain inference</button></div>
+              <p class="small" id="in-report-result" aria-live="polite"></p>
+              <div class="kv" id="in-since-kv"></div>
+            </details>
+            <details class="detailsCard" id="in-api" hidden>
+              <summary><span data-help="in.api">Web3 API</span><span class="sumHint" id="in-api-hint">Call this model from code</span></summary>
+              <div class="kv" id="in-api-kv"></div>
+              <div id="in-api-keybox" hidden>
+                <h4 class="adv-h">Access key for a plan</h4>
+                <div class="row wrap"><button class="btn2" type="button" id="in-api-newkey">Create an access key</button><select id="in-api-plan" aria-label="Plan"></select><button class="btn2" type="button" id="in-api-buy" disabled>Buy this plan for the key</button></div>
+                <div class="kv" id="in-api-keykv"></div>
+                <p class="small muted" id="in-api-keynote">The key is made in this browser and never sent anywhere. Anyone with its private key can use the plan bought for it, so store it like a password.</p>
+              </div>
+              <div class="row wrap"><button class="btn2" type="button" id="in-api-copy">Copy code</button><button class="btn2" type="button" id="in-api-inputs" disabled>Copy inputs of the last run</button><button class="btn2" type="button" id="in-api-try" disabled>Run the last inputs through the API</button><a class="btn2" href="./docs.html#web3-api" target="_blank" rel="noopener">API docs</a></div>
+              <p class="small" id="in-api-result" aria-live="polite"></p>
+              <pre class="code" id="in-api-code"></pre>
+            </details>
+
+            <div class="block" id="in-manual" hidden>
+              <h3>Input profile</h3>
+              <p class="muted small">This Crypto AI model has no embedded market profile. Its features match the market engine; set how it was built.</p>
+              <div class="fgrid">
+                <div class="field"><label for="in-m-exchange">Exchange</label><select id="in-m-exchange"><option value="binance">Binance USD-M</option><option value="coinbase">Coinbase</option></select></div>
+                <div class="field"><label for="in-m-candle">Candle</label><select id="in-m-candle"><option>1m</option><option>3m</option><option>5m</option><option selected>15m</option><option>30m</option><option>1h</option><option>2h</option><option>4h</option><option>6h</option><option>8h</option><option>12h</option><option>1d</option></select></div>
+                <div class="field"><label for="in-m-family">Feature engine</label><select id="in-m-family"><option value="auto" selected>Detect</option><option value="legacy">Legacy</option><option value="optimal">Optimal</option><option value="mixed">Mixed</option></select></div>
+                <div class="field"><label for="in-m-seed">Feature seed · UTC</label><input id="in-m-seed" type="datetime-local" step="60" /></div>
+              </div>
+            </div>
+
+            <div class="block">
+              <h3>Candle</h3>
+              <div class="fgrid">
+                <div class="field">
+                  <label for="in-market" data-help="in.market">Market</label>
+                  <input id="in-market" list="in-markets" autocomplete="off" spellcheck="false" />
+                  <datalist id="in-markets"></datalist>
+                </div>
+                <div class="field">
+                  <span class="label" id="in-mode-label" data-help="in.time">Time</span>
+                  <div class="seg compact" id="in-mode" role="radiogroup" aria-labelledby="in-mode-label">
+                    <button type="button" role="radio" aria-checked="true" data-value="latest">Latest</button>
+                    <button type="button" role="radio" aria-checked="false" data-value="historical">Historical</button>
+                  </div>
+                </div>
+                <div class="field" id="in-asof-field" hidden>
+                  <label for="in-asof" data-help="in.time">Candle close · UTC</label>
+                  <input id="in-asof" type="datetime-local" step="60" />
+                </div>
+                <div class="field">
+                  <label for="in-threshold" data-help="in.threshold">Signal threshold</label>
+                  <input id="in-threshold" type="number" min="0" max="1" step="0.01" value="0.5" />
+                </div>
+              </div>
+              <label class="check" id="in-verify-wrap" hidden><input type="checkbox" id="in-verify" checked /> Verify on GenesisL1 with <span class="mono">predictView</span></label>
+              <div class="actions-bar">
+                <span class="pill" id="in-pill">Ready</span>
+                <div class="row">
+                  <button class="btn" type="button" id="in-cancel" hidden>Cancel</button>
+                  <button class="btn primary" type="button" id="in-run">Run inference</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="run" id="in-run-box" hidden>
+            <div class="run-top"><strong id="in-stage">Starting</strong><span class="mono" id="in-pct">0%</span></div>
+            <div class="progress" role="progressbar" aria-label="Inference" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="in-progress"><div class="bar" id="in-bar"></div></div>
+            <p class="muted small" id="in-message"></p>
+          </div>
+          <div class="alert" id="in-error" role="alert" hidden></div>
+
+          <div class="result" id="in-result" hidden>
+            <div class="signal" id="in-signal">
+              <div class="signal-main">
+                <span class="signal-label" id="in-signal-label">Probability</span>
+                <strong class="signal-value mono" id="in-probability">—</strong>
+                <span class="signal-decision" id="in-decision">—</span>
+              </div>
+              <div class="prob-track" aria-hidden="true"><div class="prob-fill" id="in-prob-fill"></div><div class="prob-mark" id="in-prob-mark"></div></div>
+              <p class="muted small" id="in-signal-sub"></p>
+            </div>
+            <div class="stat-grid" id="in-stats"></div>
+            <p class="muted small" id="in-evidence"></p>
+            <div class="row wrap">
+              <button class="btn2" type="button" id="in-receipt">Download receipt</button>
+              <button class="btn2" type="button" id="in-vector">Feature vector CSV</button>
+            </div>
+            <details class="detailsCard">
+              <summary><span>Feature vector</span><span class="sumHint" id="in-vec-count"></span></summary>
+              <div class="table-scroll"><table class="tbl" id="in-vec"></table></div>
+            </details>
+          </div>
+        </section>
+</div>

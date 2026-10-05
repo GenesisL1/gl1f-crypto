@@ -1,0 +1,17 @@
+{
+  "name": "GL1F Crypto: crypto AI model builder",
+  "short_name": "GL1F Crypto",
+  "description": "No-code crypto AI models on GenesisL1: dataset, AI model training, backtest, on-chain deployment and inference.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#e3122e",
+  "categories": ["finance", "education", "productivity"],
+  "icons": [
+    { "src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "./assets/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

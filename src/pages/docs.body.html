@@ -1,0 +1,202 @@
+<div class="docs-layout">
+<nav class="toc" aria-label="On this page">
+      <a href="#overview">Overview</a><a href="#contracts">Contracts</a><a href="#fees">Fees &amp; burns</a><a href="#monetization">Model monetization</a><a href="#licenses">Licenses</a><a href="#admin">Admin &amp; multisig</a><a href="#stats">Live stats</a>
+      <a href="#data">Data &amp; signals</a><a href="#validation">Validation</a><a href="#backtests">Backtests</a><a href="#verify">Verify it yourself</a><a href="#web3-api">Web3 API</a><a href="#track-record">Track record</a><a href="#disclaimer">Disclaimer</a><a href="./legal/terms.html">Terms of Service</a>
+    </nav>
+<div class="docs">
+      <section id="overview">
+        <div class="eyebrow"><b>Docs</b> / Overview <span class="status pending" id="docs-status">Contracts pending</span></div>
+        <h1 style="font-size:clamp(2rem,4vw,3.2rem)">How GL1F Crypto <span class="serif">works.</span></h1>
+        <p>GL1F Crypto is a static web app. It downloads completed candles from Binance USD-M or Hyperliquid perpetuals, or Coinbase spot, straight into your browser, computes up to 212 causal market signals and 62 world signals, labels every candle with a target-before-stop question, trains integer gradient-boosted trees, and backtests them with fees. A Crypto AI model can be minted on GenesisL1 as a Crypto AI Model NFT; for a registered Crypto AI model, the local and on-chain evaluators return exactly the same integer score.</p>
+        <p>Nothing runs on a server we control. There is no account, no API key, and no data leaves your device except the public transactions you sign.</p>
+      </section>
+
+      <section id="contracts">
+        <div class="eyebrow"><b>01</b> / Contracts</div>
+        <h2>Dedicated crypto contracts, <span class="serif">burnable fees.</span></h2>
+        <p>The crypto runtime gets its own contract set on GenesisL1 (chain id 29): a store for Crypto AI model bytes, a registry, a Crypto AI Model NFT, the on-chain runtime and a marketplace. The registry and marketplace are the GL1F contracts with a few changes: protocol fees are never paid out to anyone and accumulate until someone burns them; creators choose a license for each model; creator income follows the NFT when it changes hands; and contract ownership moves in two steps, so it can safely go to a multisig.</p>
+        <div class="table-scroll"><table class="tbl" id="docs-contracts"></table></div>
+        <p class="small muted" id="docs-contracts-note"></p>
+      </section>
+
+      <section id="fees">
+        <div class="eyebrow"><b>02</b> / Fees &amp; burns</div>
+        <h2>Every protocol fee <span class="serif">goes up in smoke.</span></h2>
+        <p>Deploying a Crypto AI model costs a flat <strong>Crypto AI model creation fee</strong> plus a <strong>per-byte fee</strong> for the bytes stored on-chain. Listing a Crypto AI Model NFT in the marketplace costs a <strong>listing fee</strong>. All three stay inside the contract that collected them. Anyone, at any time, can call <code>burnFees()</code> to send the whole balance to <code class="addr">0x000000000000000000000000000000000000dEaD</code>, an address no key controls. The owner can adjust fee levels; nobody can withdraw.</p>
+        <div class="grid three" style="margin:22px 0">
+          <div class="card"><div class="bigstat"><span data-help="docs.creation">Crypto AI model creation fee</span><b id="fee-creation">—</b><span id="fee-creation-note">set at deployment</span></div></div>
+          <div class="card"><div class="bigstat"><span data-help="docs.bytes">Per-byte fee</span><b id="fee-byte">—</b><span id="fee-byte-note">set at deployment</span></div></div>
+          <div class="card"><div class="bigstat"><span data-help="docs.listing">Listing fee</span><b id="fee-listing">—</b><span id="fee-listing-note">set at deployment</span></div></div>
+        </div>
+        <p class="formula">deploy fee = creation fee + per-byte fee × Crypto AI model bytes &nbsp;·&nbsp; paid in L1 &nbsp;·&nbsp; held by the registry until burned</p>
+        <p class="small muted" id="fee-example"></p>
+        <h3 style="margin-top:28px">Burn what's waiting</h3>
+        <p>Burning is a public good: the caller pays only gas, and the event records who pressed the button.</p>
+        <div class="grid two">
+          <div class="card"><div class="bigstat"><span data-help="docs.pending">Registry · waiting to burn</span><b id="pending-registry">—</b><span id="pending-registry-note">creation + per-byte fees</span></div><div class="row wrap" style="margin-top:14px"><button class="btn primary" type="button" id="burn-registry" disabled>Burn registry fees</button></div></div>
+          <div class="card"><div class="bigstat"><span data-help="docs.pending">Marketplace · waiting to burn</span><b id="pending-market">—</b><span id="pending-market-note">listing fees</span></div><div class="row wrap" style="margin-top:14px"><button class="btn" type="button" id="burn-market" disabled>Burn listing fees</button></div></div>
+        </div>
+        <div class="alert" id="burn-result" role="status" hidden></div>
+        <p class="small muted" style="margin-top:14px">Creator income is different: paid-inference fees, tips and access passes go to each Crypto AI model's admin (its current owner) or the recipient that admin chose, and are never burned.</p>
+      </section>
+
+      <section id="monetization">
+        <h2>Model monetization and <span class="serif">the marketplace.</span></h2>
+        <p><strong>The owner is the model admin.</strong> Every Crypto AI model is an NFT. Whoever owns it is the model admin, the only address that can change its access mode, fee per inference, fee recipient and subscription plans, pause or resume inference, and list it for sale. When the NFT is sold or transferred, the new owner becomes the admin.</p>
+        <h3>Business models</h3>
+        <ul>
+          <li><strong>Free:</strong> anyone can run the model and verify its scores on-chain.</li>
+          <li><strong>Tips:</strong> inference stays open and users may pay the fee recipient voluntarily.</li>
+          <li><strong>Pay per inference:</strong> each on-chain inference pays the fee the admin sets.</li>
+          <li><strong>Subscription plans:</strong> for paid models the admin can publish plans (duration in blocks, price in L1, active or not). A subscriber pays once with <code>buyAccess</code> and their access key can run the model until the plan expires; buying again extends it. Durations are entered in days and converted at GenesisL1's measured block time.</li>
+        </ul>
+        <h3 id="marketplace">Marketplace</h3>
+        <p>An admin can list the Crypto AI Model NFT at a price (the marketplace takes a small listing fee, which is burnable like every protocol fee), cancel the listing, and anyone can buy it at the listed price. The sale price goes to the seller and the buyer receives the NFT and the admin rights.</p>
+        <h3>Who gets paid</h3>
+        <p>Inference fees, tips and subscription payments go to the fee recipient chosen by the current admin. When the NFT is sold or transferred, a recipient chosen by the previous owner stops applying and payments go to the new owner until it chooses its own. Sale prices go to the seller. Protocol fees (model creation, per-byte storage, listing) stay in the contracts until anyone burns them to 0x…dEaD. Nobody, including the contract owner, can withdraw them. The contract owner's powers are listed under <a href="#admin">Admin &amp; multisig</a>.</p>
+      </section>
+      <section id="licenses">
+        <h2>One license per model, <span class="serif">chosen at mint.</span></h2>
+        <p>Every Crypto AI model NFT carries a license for the model it holds. The creator picks it when minting, from a catalog of standard licenses stored in the registry; the global default, <strong id="lic-default">{{LIC_DEFAULT}}</strong>, is preselected in the studio. The choice is written on-chain. Changing the default, closing an entry to new models or selling the NFT never changes it. Only the model admin can move it, and only to a later version of the same license or to a more open license, so rights already granted always stand. Anyone can read it with <code>licenseOf(tokenId)</code>, and model pages and the marketplace show it.</p>
+        <p>Every model's bytes are public on GenesisL1, so no license can stop copying technically; the license decides what is lawful. For paid models the studio preselects the <a href="./legal/onchain-use-1.0.html">GL1F On-Chain Use License</a>: all rights reserved, use only through GenesisL1 on the admin's terms, and runs off-chain only for the admin, its subscribers, or anyone while the model is free to run. The <a href="./legal/terms.html">Terms of Service</a> bind every user of the app and the contracts to respect each model's license, and the studio follows the same rules.</p>
+        <p>The protocol admin can add licenses and new versions of a license to the catalog, close an entry to new models and change the default. It cannot change the license of a model that exists.</p>
+        <p class="small muted">Summaries are informal and are not legal advice; the linked license text is what counts. Identifiers follow the SPDX License List {{SPDX_VERSION}}. OpenMDW 1.1 is newer than that list and uses LicenseRef-OpenMDW-1.1.</p>
+        {{LICENSES}}
+      </section>
+
+      <section id="admin">
+        <h2>Who can change what: <span class="serif">admins and multisigs.</span></h2>
+        <p>Each change is a transaction from the owner's wallet or multisig; <code>npm run owner:tx</code> in the repository prepares them.</p>
+        <h3>Model admin</h3>
+        <p>The owner of a Crypto AI model NFT runs that model: access, fees, fee recipient, subscription plans, pausing and sales. To put a model under a multisig, transfer the NFT to the multisig; its income follows. Owner-signed free inference needs a single-key signature, so a multisig that owns a paid model can give an ordinary wallet an access key with <code>setOwnerAccessKey</code>.</p>
+        <h3>Protocol owners</h3>
+        <p>The registry and the marketplace each have an owner. Together they can:</p>
+        <ul>
+          <li>set the model creation fee and the per-byte fee (registry) and the listing fee (marketplace);</li>
+          <li>publish new versions of the <a href="./legal/terms.html">Terms of Service</a>, stored in full on-chain, add licenses and new versions of a license, close a license to new models and choose the default license;</li>
+          <li>cancel any marketplace listing;</li>
+        </ul>
+        <p>A model's admin can delete it once no paid subscription is still running, so nobody is owed access. Deleting burns the NFT and removes the model from the registry, the marketplace and search; the bytes already written to GenesisL1 storage stay on-chain, since deployed code cannot be erased. Until then the admin can pause inference. The protocol admins cannot delete models, cannot withdraw protocol fees, change a model's license, bytes or settings, move anyone's NFT, or point the registry at a different NFT contract (that wiring happens once, at deployment). Every change is a public transaction.</p>
+        <h3>Handing the protocol admin to a multisig</h3>
+        <ol>
+          <li>Set up the multisig on GenesisL1 (chain id 29) and check that it can send a transaction there.</li>
+          <li>The current owner calls <code>transferOwnership(multisig)</code> on the registry and on the marketplace. Nothing changes yet.</li>
+          <li>The multisig calls <code>acceptOwnership()</code> on each contract and takes control. Until then the old owner stays in charge and can cancel with <code>transferOwnership(0x0)</code>, so a mistyped address, or a multisig that only exists on another chain, can never lock the contracts.</li>
+        </ol>
+        <p>Terms of Service in force: <span id="terms-onchain">version {{TERMS_VERSION}}, as bundled with this site</span>. Each new version is recorded in the registry with <code>setToS</code>; the app asks every user to accept it, and publishing a model requires it.</p>
+        <p><code>scripts/owner_tx.mjs</code> in the repository prints the transaction data for each step and for fee, license and terms changes, ready for a multisig's custom transaction form. <span id="admin-owners"></span></p>
+      </section>
+      <section id="stats">
+        <div class="eyebrow"><b>03</b> / Live stats</div>
+        <h2>Read straight from <span class="serif">the chain.</span></h2>
+        <p>These numbers are view calls against GenesisL1, made by your browser when the page loads. <span id="stats-block"></span></p>
+        <div class="stat-grid" id="stats-models" style="margin-top:16px"></div>
+        <div class="grid two" style="margin-top:14px">
+          <div class="card"><div class="label">Access mix</div><div class="bars" id="stats-mix"></div></div>
+          <div class="card"><div class="label">Fees</div><div class="bars" id="stats-fees"></div></div>
+        </div>
+        <details class="detailsCard" open><summary><span>Latest Crypto AI models</span><span class="sumHint" id="stats-latest-hint"></span></summary><div class="table-scroll"><table class="tbl" id="stats-latest"></table></div></details>
+        <div class="alert info" id="stats-note" hidden></div>
+      </section>
+
+      <section id="data">
+        <div class="eyebrow"><b>04</b> / Data &amp; signals</div>
+        <h2>Completed candles, <span class="serif">causal signals.</span></h2>
+        <ul>
+          <li><strong>Binance USD-M</strong> (<code>fapi.binance.com</code>): OHLCV, quote volume, trade count, taker buy volume, funding history. All 212 signals.</li>
+          <li><strong>Coinbase spot</strong> (<code>api.exchange.coinbase.com</code>): OHLCV. Signals needing trade counts, taker flow or funding are unavailable, leaving 193. Native candles are 1m, 5m, 15m, 1h, 6h and 1d; other sizes are aggregated from the next smaller native size and labelled as derived.</li>
+          <li><strong>Hyperliquid perps</strong> (<code>api.hyperliquid.xyz/info</code>): OHLCV, trade counts and hourly funding; no taker flow, leaving 204 signals. The API serves only the latest 5,000 candles per coin and size, so candles start at 15m and the studio sets the earliest start date for you (15m ≈ 52 days of history including the 22-day warm-up, 1h ≈ 208 days). Candles you have already downloaded stay in the browser cache. Memecoins use a k prefix (kPEPE); 6h candles are built from 2h.</li>
+          <li>Only completed candles are used, frozen to the exchange's server time. Coinbase and Hyperliquid publish nothing for buckets without trades; those gaps are filled with the previous close and zero volume, but a hole longer than 6 hours is treated as an outage and stops the build. Funding signals use each venue's own published rates (Binance every 8 hours, Hyperliquid hourly), so a Crypto AI model belongs to the venue it was trained on.</li>
+          <li>Every signal at candle <em>t</em> uses candles up to and including <em>t</em>. Values are cast to binary32 and quantized with GL1F's rule, clamp<sub>int32</sub>(⌊Q·x + ½⌋), exactly as the trainers and the on-chain runtime do. Warm-up history is fetched before your start date so long indicators are complete from the first row.</li>
+          <li>Candles are cached in your browser (IndexedDB). Clearing site data removes them.</li>
+        </ul>
+      </section>
+      <section id="web3-api">
+        <h2>Web3 API: run any model from code.</h2>
+        <p>The <a href="./api.html">Web3 API page</a> has the full reference, the addresses and a bot example. Every Crypto AI model can be called from your own code, in a browser or in Node 18+, with the GL1F Crypto helper <a href="./sdk/gl1f-crypto.js">sdk/gl1f-crypto.js</a> and <code>ethers</code> v6. The Inference step's <b>Web3 API</b> panel shows ready code for the open model, its contract addresses and RPC.</p>
+        <pre class="code">import * as ethers from "ethers";
+import { GL1FCrypto } from "./gl1f-crypto.js";
+const gl1f = new GL1FCrypto({ ethers, rpcUrl, chainId: 29, registry, runtime });
+const model = await gl1f.model(42);                         // title, question, pricing, plans, inputs
+const engine = await GL1FCrypto.nodeEngine();               // browser: await GL1FCrypto.browserEngine()
+const inputs = await gl1f.latestInputs(model, { engine });  // latest completed candle, the studio's own engine
+const out = await gl1f.predict(model, inputs.valuesQ);      // { probability, scoreQ, via }</pre>
+        <div class="table-scroll"><table class="tbl">
+          <tr><th>Model</th><th>Call</th><th>What it costs</th></tr>
+          <tr><td>Free or tips</td><td><code>predict(model, valuesQ)</code>: a read of <code>predictView</code></td><td>Nothing: no key, no gas</td></tr>
+          <tr><td>Paid, with a plan</td><td><code>predict(model, valuesQ, { accessKey })</code>: the access key signs the request (EIP-712 <code>AccessView</code>) and <code>predictAccessView</code> checks it</td><td>The plan, bought once for the key's address with <code>buyAccess(model, planId, key.address, signer)</code>; each call is a free read</td></tr>
+          <tr><td>Paid, per run</td><td><code>predict(model, valuesQ, { payer })</code>: a <code>predictTx</code> transaction</td><td>The model's fee per run, paid to its admin, plus gas</td></tr>
+          <tr><td>Your own paid model</td><td><code>predict(model, valuesQ, { owner })</code>: your wallet signs (<code>OwnerView</code>)</td><td>Nothing</td></tr>
+        </table></div>
+        <p><b>Access keys.</b> <code>gl1f.newAccessKey()</code> makes a key pair; buy a plan for its address once and keep its private key on your server or bot. Signatures expire after 5 minutes by default and cover the exact inputs, so a key cannot be replayed for other inputs. <code>accessStatus(model, address)</code> tells until which block a key works. The studio can create a key and buy a plan for it in the Web3 API panel.</p>
+        <p>Inputs are the model's signals on a completed candle, quantized to integers (<code>quantize(values, scaleQ)</code>). <code>latestInputs</code> computes them with the published market engine (<a href="./sdk/gl1f-engine.js">sdk/gl1f-engine.js</a>), the code the studio runs, so the score equals the studio's and the chain's. Models that use world signals fetch the same public data.</p>
+      </section>
+      <section id="track-record">
+        <h2>A track record anyone can check.</h2>
+        <p>When you publish a Crypto AI model, the studio can add its training report to the model's on-chain record: the final test window and row count, ROC AUC, log-loss, accuracy and a SHA-256 fingerprint of every test row (open time, label, integer score). The studio computes it; nobody can type it in. It rebuilds the same test rows from public candles with the backtest replay and publishes the report only if the result matches the training session exactly. After minting the report can never change.</p>
+        <p>In the Inference step, anyone who can run the model (anyone for a free model; the admin and subscribers of a paid one) can press <b>Verify with on-chain inference</b>: the studio rebuilds the rows, compares every metric and the fingerprint with the published report, and checks sampled scores against GenesisL1's on-chain inference. It also scores every completed candle since the model was minted, data it could not have seen; the mint time is recorded on-chain. A report is the creator's own test, so the record since minting is the stronger evidence.</p>
+        <p><b>Private internals.</b> Any model can keep its number of trees, depth and signal list private on the marketplace, model pages, preview cards and in the studio, for everyone but its admin. It is on by default for paid models and the admin can change it at any time after minting. The bytes stay public on-chain: this makes copying harder, it is not encryption.</p>
+      </section>
+      <section id="world-signals">
+        <h2>World signals: calendars, the sky, macro, disasters.</h2>
+        <p>Besides 212 market signals, a Crypto AI model can learn from 62 world signals. Holidays, events and astronomy are computed from each candle's close time. Macro, disaster and war signals are fetched live in your browser when you build a dataset, straight from public sources that allow it, with no key and nothing to install. Every value uses only what was known when the candle closed. The plain name, machine name and meaning of all 274 signals are in <a href="./signals.txt">signals.txt</a>.</p>
+        <div class="table-scroll"><table class="tbl">
+          <tr><th>Group</th><th>Examples</th><th>Source and timing</th></tr>
+          <tr><td>Holidays &amp; events</td><td>US market holidays, Fed decision days, US and major world elections, Lunar New Year, Golden Weeks, options expiry, US jobs day</td><td>Computed: NYSE holiday rules and built-in Fed, election and holiday lists</td></tr>
+          <tr><td>Astronomy</td><td>Moon phase and illumination, full and new moon, Mercury, Venus and Mars retrograde, planetary alignment, days to equinox or solstice</td><td>Computed: JPL approximate orbital elements and a low-precision lunar theory</td></tr>
+          <tr><td>Macro &amp; markets</td><td>10-year and 2-year Treasury yields, yield curve, Fed funds rate, WTI and Brent oil, natural gas, US dollar index, VIX, S&amp;P 500, gold, CPI inflation, unemployment</td><td>Live: Federal Reserve and BLS data via DBnomics; EIA, BLS, Federal Reserve H.10, Cboe and Shiller data via DataHub. Daily series count from 2 days after their date, monthly ones from 40 to 45 days after the month</td></tr>
+          <tr><td>Disasters &amp; conflict</td><td>M6+ and M7+ earthquakes, active hurricanes and typhoons, their winds, major storms, new storms, war attention, days since a major war escalation</td><td>Live: USGS (since 1973), NASA EONET tropical storms (since 2000) and Wikipedia pageviews (since July 2015), counted up to the day before; escalations from a built-in list</td></tr>
+        </table></div>
+        <p>If a live source cannot be reached, the studio uses the copy this site publishes at <a href="./data/world.json">data/world.json</a>, refreshed by its scheduled job. Every world signal has years of history: the signal list shows where each one starts, and a dataset that starts before a selected signal's history is stopped with a clear message. Fed decision dates, elections and war escalations are built-in lists from 2014 that need a yearly update. A model that uses world signals loads the same data again when it runs inference.</p>
+      </section>
+
+      <section id="validation">
+        <div class="eyebrow"><b>05</b> / Validation</div>
+        <h2>Tested on the future, <span class="serif">never the past.</span></h2>
+        <p>The final temporal test partition (the last 15% of rows) is fixed before any development folds are built, and it is scored once. Walk-forward validation (the default) uses five expanding-window folds, starting from the first 40% of development rows. Every earlier/later boundary is protected by the label's outcome look-ahead (your horizon), followed by purge and embargo margins, which are zero by default; no training row's outcome window reaches the rows it is evaluated on. Each fold's early stopping picks the number of trees; candidates are compared by their mean validation loss across completed folds, the most recent fold supplies the retained tree budget, and the final Crypto AI model is fitted on that fold's training rows or, with refit, on all development rows before the final test is scored. Shuffled validation is available for experiments and is clearly labelled as optimistic. The number of folds is adjustable from 2 to 20, the window can be expanding or rolling, and the first-window and final-test shares can be changed in the studio.</p>
+        <p><strong>Heuristic search (optional).</strong> Instead of one training run, the studio can try up to 200 candidate settings. The first candidate is exactly yours; each later one varies trees, depth, learning rate, minimum leaf size and patience around the best candidate so far, the same moves as the GenesisL1 Forest studio. Every candidate is scored on all walk-forward folds, the lowest mean validation log-loss wins, and only then is the final test evaluated, once. A live chart can show train and validation loss tree by tree while this runs.</p>
+        <p>Scores reported: ROC AUC, log-loss, balanced accuracy, precision and recall at 0.5, Brier score, the confusion matrix, and the baseline of always predicting the majority answer.</p>
+      </section>
+
+      <section id="backtests">
+        <div class="eyebrow"><b>06</b> / Backtests</div>
+        <h2>The rules of the <span class="serif">test drive.</span></h2>
+        <ul>
+          <li>The worker replays the Crypto AI model's exact signals over the chosen period using the same engine and feature seed as the training dataset.</li>
+          <li>A signal is a candle whose probability is at or above the threshold. The trade enters at the next candle's open, long for Up Crypto AI models and short for Down Crypto AI models.</li>
+          <li>Target and stop are the label's levels, measured from the EMA baseline at the signal candle. If both are touched in one candle, the stop wins. A candle that opens beyond a level exits at that open. Signals whose entry price is already past the target or the stop are skipped and counted separately.</li>
+          <li>Without a hit, the trade exits at the close of the last horizon candle. One position at a time; by default the whole account is the margin at 1× (no leverage), and both can be changed (see below).</li>
+          <li>Fees are charged on entry and exit; slippage worsens both fills. Funding payments, partial fills, liquidity and outages are not modelled.</li>
+          <li>The default period is the Crypto AI model's final test period, which it never trained on. Earlier periods are in-sample and flagged.</li>
+        </ul>
+        <p><strong>Entries and leverage.</strong> A signal exists only after its candle has closed, so the earliest trade is the next candle's open. There is no trade if that candle had no trades (a gap-filled bucket), if there is no next candle, or if its open is already beyond the target or the stop the signal defined. One position at a time; when the target and the stop are both touched in one candle, the stop is assumed first. Leverage from 1× to 100× multiplies returns on margin and fees on the full notional; with isolated margin, a position is liquidated when the adverse move reaches about 1 / leverage minus the maintenance margin, losing that trade's margin. Funding payments are not included. Coinbase spot runs without leverage.</p>
+      </section>
+
+      <section id="verify">
+        <div class="eyebrow"><b>07</b> / Verify it yourself</div>
+        <h2>Don't trust. <span class="serif">Re-run.</span></h2>
+        <p>Every contract address above is checked against the keccak-256 hash of its deployed bytecode before the app reads or writes anything. Published Crypto AI models are rebuilt from on-chain chunks and hashed against their Crypto AI model ID. On the Inference step, "Verify on GenesisL1" asks the on-chain runtime for the same prediction and compares the integer score. The source code, contracts and tests are public in the <a href="https://github.com/GenesisL1/gl1f-crypto">GL1F Crypto repository</a>, derived from <a href="https://github.com/GenesisL1/Forest">GenesisL1 Forest</a>.</p>
+      </section>
+
+      <section id="disclaimer">
+        <div class="disclaimer" role="note">
+          <h2>Disclaimer</h2>
+          <p><strong>GL1F Crypto is open-source, experimental data-science software provided for educational and research purposes only.</strong> It is not a trading product, signal service, broker, exchange, fund or adviser.</p>
+          <ul>
+            <li><strong>No investment advice.</strong> Nothing in the software, its documentation, its example questions or any Crypto AI model is financial, investment, trading, legal or tax advice, or a recommendation or solicitation to buy, sell or hold any asset.</li>
+            <li><strong>Serious risk.</strong> Trading crypto-assets, and especially derivatives, leveraged products and memecoins, carries a high risk of rapid and total loss. Only you can decide what risk is appropriate for you.</li>
+            <li><strong>Crypto AI models can be wrong.</strong> Predictions are statistical estimates from historical data. They can be overfit, stale, biased by data errors or broken by changing market conditions. Past performance, including any backtest, does not indicate future results.</li>
+            <li><strong>Backtests are simulations.</strong> They ignore many real-world effects such as liquidity, partial fills, latency, funding, outages and your own behaviour.</li>
+            <li><strong>Not for live setups.</strong> Crypto AI models built or run with this software must not be used for live trading, trading bots, copy-trading or any automated execution.</li>
+            <li><strong>No warranty, no liability.</strong> The software is provided "as is", without warranty of any kind, express or implied. In no event shall the authors, contributors or copyright holders be liable for any claim, damages or other liability arising from its use.</li>
+            <li><strong>Permanent transactions.</strong> Deployments, listings and burns on GenesisL1 are public and irreversible. Protocol fees are burned and cannot be refunded.</li>
+            <li><strong>Your responsibility.</strong> You are responsible for your decisions, for securing your wallet and keys, and for complying with the laws and regulations that apply to you.</li>
+          </ul>
+          <p class="small">Binance, Coinbase and Hyperliquid are trademarks of their respective owners and are named only to identify public market-data sources. GL1F Crypto is not affiliated with, endorsed by or sponsored by any of them. L1 coin is referred to only in its operational role as the unit in which GenesisL1 fees are paid.</p>
+        </div>
+        <h3>No warranty of any kind</h3>
+        <p>The software, the website, the smart contracts, the Crypto AI models and all data are provided “as is” and “as available”, without warranty of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, title, non-infringement, accuracy, reliability, security, availability, or that results will be error-free. The software may contain bugs, errors, defects, inaccuracies, omissions and other imperfections, and may behave differently from its description. The smart contracts have not been audited and may contain vulnerabilities. Market data comes from third parties and may be wrong, delayed or incomplete.</p>
+        <p>To the maximum extent permitted by law, in no event shall the authors, contributors, Decentralized Science Labs, the GenesisL1 Association or any affiliated party be liable for any claim, loss or damage of any kind (direct, indirect, incidental, special, consequential or exemplary), including loss of funds, profits, data or opportunity, arising from or in connection with the software, its results or its use, whether in contract, tort or otherwise, even if advised of the possibility of such damage. You use it entirely at your own risk.</p>
+      </section>
+</div>
+</div>

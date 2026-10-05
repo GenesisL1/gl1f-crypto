@@ -1,0 +1,43 @@
+# GL1F Crypto
+
+> GL1F Crypto is a no-code crypto AI model builder on GenesisL1, an EVM Layer 1 blockchain (chain id 29). In the browser you build a dataset from Binance, Coinbase or Hyperliquid candles, train a gradient-boosted tree model with walk-forward validation, backtest it with fees, slippage and leverage, publish it as a Crypto AI model NFT and run inference that anyone can verify on-chain. Early alpha, educational, not financial advice.
+
+Every page has a Markdown version for language models, linked below. Prices, predictions and backtests are educational and are not financial advice.
+
+## Key facts
+
+- Chain: GenesisL1, EVM Layer 1, chain id 29, live since 2021
+- Model format: GL1F integer tree ensembles (gradient-boosted trees); the same integer score in the browser and inside the EVM
+- Data: Binance, Coinbase and Hyperliquid candles fetched by the browser; only completed candles, frozen to the exchange's server time
+- Signals: 274 in all: 212 from market data (momentum, volatility, volume, funding, BTC context) and 62 world signals (holidays and events, astronomy, macro and markets, disasters and conflict); list at https://crypto.gl1f.com/signals.txt
+- Validation: walk-forward folds (2 to 20), expanding or rolling windows, and a final test set kept locked until the end
+- Backtests: entries at the next candle's open, fees, slippage, stops, leverage from 1x to 100x, liquidation and account ruin
+- Crypto AI model NFTs: one per published model; its holder is the model admin; access is free, tips, a fee per inference, or subscriptions
+- Licenses: every model carries the license its creator chose at mint, from 38 standard licenses (SPDX License List 3.29.0); default CC BY-SA 4.0; paid models default to the GL1F On-Chain Use License (all rights reserved, use only through GenesisL1); a model's admin can only open its license up or move it to a later version
+- Terms of Service: version 1, stored in full on-chain; the registry owner publishes new versions and users accept them in the app
+- Fees: protocol fees (model creation, per-byte storage, listing) are burned; creator income goes to the model admin
+- Admin: the registry and marketplace owners set protocol fees, terms and the license catalog; ownership moves in two steps and can go to a multisig; nobody can withdraw protocol fees
+- Status: early alpha; educational; not financial advice; not for live or automated trading
+- Source: https://github.com/GenesisL1/gl1f-crypto (MIT)
+
+## Docs
+
+- [Overview](https://crypto.gl1f.com/index.md): what GL1F Crypto is, the five steps, key facts, questions and answers
+- [Studio](https://crypto.gl1f.com/app.md): dataset, training, backtest, publishing and inference, all in the browser
+- [Marketplace](https://crypto.gl1f.com/market.md): access modes, the model admin, licenses and income
+- [Web3 API](https://crypto.gl1f.com/api.md): call any model from code: free reads, access keys with plans, pay per run, live inputs, full reference
+- [Documentation](https://crypto.gl1f.com/docs.md): contracts, fees, licenses, admins and multisigs, data sources, validation, backtest rules, disclaimer
+- [Terms of Service](https://crypto.gl1f.com/legal/terms.md): the terms for the app, the website and the smart contracts, version 1
+- [GL1F On-Chain Use License](https://crypto.gl1f.com/legal/onchain-use-1.0.md): the reserved license for models that may be used only through GenesisL1
+
+## Crypto AI models
+
+- [All published Crypto AI models](https://crypto.gl1f.com/m/): one page per model, with the question it answers
+
+## Optional
+
+- [Everything in one file](https://crypto.gl1f.com/llms-full.txt)
+- [License catalog (JSON)](https://crypto.gl1f.com/licenses.json): the 38 licenses a model can be published under, with SPDX identifiers
+- [All signals](https://crypto.gl1f.com/signals.txt): plain name, machine name and meaning of every signal
+- [Sitemap](https://crypto.gl1f.com/sitemap.xml)
+- [Source code](https://github.com/GenesisL1/gl1f-crypto): MIT

@@ -1,0 +1,141 @@
+<div class="docs-layout">
+<nav class="toc" aria-label="On this page">
+      <a href="#quick-start">Quick start</a><a href="#addresses">Addresses</a><a href="#access">Access modes</a><a href="#keys">Access keys and plans</a><a href="#inputs">Inputs</a>
+      <a href="#reference">Reference</a><a href="#errors">Errors</a><a href="#security">Security</a><a href="#bot">Example: a bot</a><a href="./docs.html">Docs</a>
+    </nav>
+<div class="docs">
+      <section id="quick-start">
+        <div class="eyebrow"><b>Web3 API</b> / Quick start</div>
+        <h1 style="font-size:clamp(2rem,4vw,3.2rem)">Run any Crypto AI model <span class="serif">from code.</span></h1>
+        <p>Every Crypto AI model on GenesisL1 can be called from your own code, in a browser or in Node 18+. The GL1F Crypto helper wraps the contracts: it reads a model, computes its inputs on the latest candle with the same market engine the studio runs, and returns the model's probability, computed on-chain. Free models need nothing; paid ones take an access key with a plan, the admin's signature or a fee per run.</p>
+        <p><a class="btn primary small" href="./sdk/gl1f-crypto.js" download>Download gl1f-crypto.js</a> <a class="btn small" href="./sdk/gl1f-engine.js" download>Download the market engine</a> <a class="btn small" href="./app.html#infer">Try it in the studio</a></p>
+        <pre class="code" id="api-quick">// npm i ethers   (and put gl1f-crypto.js next to your script)
+import * as ethers from "ethers";
+import { GL1FCrypto } from "./gl1f-crypto.js";
+
+const gl1f = new GL1FCrypto({ ethers, rpcUrl: "RPC_URL", chainId: CHAIN_ID, registry: "REGISTRY", runtime: "RUNTIME" });
+const model = await gl1f.model(42);                            // any model's token ID
+const engine = await GL1FCrypto.nodeEngine();                  // in a browser: await GL1FCrypto.browserEngine()
+const inputs = await gl1f.latestInputs(model, { engine });     // its inputs on the latest completed candle
+const out = await gl1f.predict(model, inputs.valuesQ);         // free model: a free read, no key, no gas
+console.log(model.title, "P =", out.probability.toFixed(4), "via", out.via);</pre>
+        <p class="muted small">The Inference step of the studio shows this code ready for the model you open, with its plans and a button that creates an access key.</p>
+      </section>
+
+      <section id="addresses">
+        <div class="eyebrow"><b>01</b> / Addresses</div>
+        <h2>Where to call, <span class="serif">on GenesisL1.</span></h2>
+        <div class="kv">
+          <div class="k">RPC</div><div class="v" id="api-rpc">—</div>
+          <div class="k">Chain ID</div><div class="v" id="api-chain">29</div>
+          <div class="k">Registry</div><div class="v" id="api-registry">—</div>
+          <div class="k">Runtime</div><div class="v" id="api-runtime">—</div>
+          <div class="k">Model NFT</div><div class="v" id="api-nft">—</div>
+        </div>
+        <p class="muted small">Read from this site's runtime configuration. The registry knows every model, its pricing, plans and keys; the runtime runs a model on its inputs and checks access.</p>
+      </section>
+
+      <section id="access">
+        <div class="eyebrow"><b>02</b> / Access modes</div>
+        <h2>Free, paid with a plan, <span class="serif">or per run.</span></h2>
+        <div class="table-scroll"><table class="tbl">
+          <tr><th>Model</th><th>Call</th><th>On-chain</th><th>What it costs</th></tr>
+          <tr><td>Free or tips</td><td><code>predict(model, valuesQ)</code></td><td><code>predictView</code>, a read</td><td>Nothing: no key, no gas</td></tr>
+          <tr><td>Paid, with a plan</td><td><code>predict(model, valuesQ, { accessKey })</code></td><td><code>predictAccessView</code>, a read: the key signs the request</td><td>The plan, bought once for the key; each call is free</td></tr>
+          <tr><td>Paid, per run</td><td><code>predict(model, valuesQ, { payer })</code></td><td><code>predictTx</code>, a transaction</td><td>The model's fee per run, paid to its admin, plus gas</td></tr>
+          <tr><td>Your own model</td><td><code>predict(model, valuesQ, { owner })</code></td><td><code>predictOwnerView</code>, a read: your wallet signs</td><td>Nothing</td></tr>
+        </table></div>
+        <p>The result is <code>{ probability, scoreQ, via }</code>: the probability that the model's question resolves yes, its integer score and the call that produced it. The score is the same integer the studio computes, so anyone can check it.</p>
+      </section>
+
+      <section id="keys">
+        <div class="eyebrow"><b>03</b> / Access keys and plans</div>
+        <h2>A key for your bot, <span class="serif">a plan for the key.</span></h2>
+        <p>A paid model's admin offers subscription plans: a duration in blocks for a price in L1. You buy a plan for an <b>access key</b>, an address whose private key lives on your server or bot, not in your wallet. The key then signs each request (EIP-712 <code>AccessView</code>: model, a hash of the exact inputs and a deadline), and the runtime checks the signature and the key's plan. Reads cost nothing.</p>
+        <pre class="code">const key = gl1f.newAccessKey();                               // { address, privateKey }: keep privateKey secret
+const model = await gl1f.model(42);
+console.log(model.plans);                                      // [{ id, durationBlocks, priceWei, active }]
+await gl1f.buyAccess(model, 1, key.address, walletSigner);     // pays plan 1 from your wallet, for the key
+console.log(await gl1f.accessStatus(model, key.address));      // { untilBlock, block, active }
+const out = await gl1f.predict(model, inputs.valuesQ, { accessKey: key.privateKey });</pre>
+        <p>Buying again extends the key's plan. A model's admin cannot revoke or take over a key with a running plan, and a model with a running plan cannot be deleted.</p>
+      </section>
+
+      <section id="inputs">
+        <div class="eyebrow"><b>04</b> / Inputs</div>
+        <h2>The same signals, <span class="serif">the same integers.</span></h2>
+        <p>A model's inputs are its signals on one completed candle, in the order stored with the model (<code>model.featureNames</code>), as integers: <code>quantize(values, model.scaleQ)</code>. <code>latestInputs(model, { engine })</code> computes them from public exchange data with the published market engine, the code the studio runs, so the score equals the studio's and the chain's. Pass <code>asOfMs</code> for any moment in history. Models that use world signals load the same public data. The engine replays at most 120 days of candles (or 4,000 of the model's candles, if longer): enough for every signal to equal a replay from the model's training start, so an old model is as fast as a new one.</p>
+        <pre class="code">const engine = await GL1FCrypto.nodeEngine("./gl1f-engine.js");   // a local copy, a URL or the script text
+const now = await gl1f.latestInputs(model, { engine });
+const then = await gl1f.latestInputs(model, { engine, asOfMs: Date.UTC(2026, 8, 1) });
+console.log(now.valuesQ.length === model.nFeatures, now.selectedOpenMs);</pre>
+      </section>
+
+      <section id="reference">
+        <div class="eyebrow"><b>05</b> / Reference</div>
+        <h2>Every method.</h2>
+        <div class="table-scroll"><table class="tbl">
+          <tr><th>Method</th><th>Returns</th></tr>
+          <tr><td><code>new GL1FCrypto({ ethers, rpcUrl, chainId, registry, runtime, nft?, provider? })</code></td><td>A client. Pass the ethers v6 module; <code>provider</code> replaces <code>rpcUrl</code>.</td></tr>
+          <tr><td><code>model(tokenId)</code></td><td><code>{ tokenId, modelId, title, description, pricing, feeWei, inferenceEnabled, scaleQ, nFeatures, featureNames, profile, report, plans }</code></td></tr>
+          <tr><td><code>latestInputs(model, { engine, asOfMs? })</code></td><td><code>{ valuesQ, values, features, selectedOpenMs, … }</code></td></tr>
+          <tr><td><code>predict(model, valuesQ, { accessKey | owner | payer, deadlineSec? })</code></td><td><code>{ probability, scoreQ, via, tx? }</code></td></tr>
+          <tr><td><code>newAccessKey()</code></td><td><code>{ address, privateKey }</code></td></tr>
+          <tr><td><code>buyAccess(model, planId, keyAddress, signer)</code></td><td><code>{ tx, untilBlock, block, active }</code></td></tr>
+          <tr><td><code>accessStatus(model, keyAddress)</code></td><td><code>{ untilBlock, block, active }</code></td></tr>
+          <tr><td><code>GL1FCrypto.browserEngine(url?)</code> · <code>GL1FCrypto.nodeEngine(source?)</code></td><td>The market engine: <code>{ infer(job), close() }</code></td></tr>
+          <tr><td><code>packInputs(valuesQ)</code> · <code>quantize(values, scaleQ)</code></td><td>The bytes the runtime reads (little-endian int32) · integers from signal values</td></tr>
+        </table></div>
+      </section>
+
+      <section id="errors">
+        <div class="eyebrow"><b>06</b> / Errors</div>
+        <h2>What a refusal means.</h2>
+        <div class="table-scroll"><table class="tbl">
+          <tr><th>Error</th><th>Meaning</th></tr>
+          <tr><td><code>NO_ACCESS</code></td><td>The access key has no running plan for this model: buy or extend one.</td></tr>
+          <tr><td><code>DEADLINE</code>, <code>SIG_EXPIRED</code></td><td>The signature's deadline has passed: check the computer's clock, or raise <code>deadlineSec</code>.</td></tr>
+          <tr><td><code>BAD_SIG</code></td><td>An owner call not signed by the wallet that holds the model's NFT.</td></tr>
+          <tr><td><code>MODE</code></td><td>The call does not fit the model's pricing, for example an access key on a free model.</td></tr>
+          <tr><td><code>INF_OFF</code>, <code>INF_DISABLED</code></td><td>The model's admin has paused inference.</td></tr>
+          <tr><td><code>INF_FEE</code></td><td>A paid run sent less than the model's fee.</td></tr>
+          <tr><td><code>takes N inputs</code></td><td>The inputs do not match the model's signals: use <code>latestInputs</code>.</td></tr>
+        </table></div>
+      </section>
+
+      <section id="security">
+        <div class="eyebrow"><b>07</b> / Security</div>
+        <h2>Keys, signatures, <span class="serif">results.</span></h2>
+        <p>Keep an access key's private key like a password: anyone who has it can use its plan, and nothing else. Use a separate key per bot. A signature covers one model, the exact inputs and a deadline (5 minutes by default), so it cannot be reused for other inputs or later. Reads are free and never move funds; only <code>buyAccess</code> and pay-per-run send a transaction from your wallet. Models are educational: a probability is not financial advice.</p>
+      </section>
+
+      <section id="bot">
+        <div class="eyebrow"><b>08</b> / Example</div>
+        <h2>A bot that asks <span class="serif">every candle.</span></h2>
+        <pre class="code">import * as ethers from "ethers";
+import { GL1FCrypto } from "./gl1f-crypto.js";
+
+const gl1f = new GL1FCrypto({ ethers, rpcUrl: "RPC_URL", chainId: CHAIN_ID, registry: "REGISTRY", runtime: "RUNTIME" });
+const model = await gl1f.model(Number(process.env.GL1F_MODEL));
+const engine = await GL1FCrypto.nodeEngine();
+async function tick() {
+  const inputs = await gl1f.latestInputs(model, { engine });
+  const out = await gl1f.predict(model, inputs.valuesQ, process.env.GL1F_ACCESS_KEY ? { accessKey: process.env.GL1F_ACCESS_KEY } : {});
+  console.log(new Date(inputs.selectedOpenMs).toISOString(), model.title, out.probability.toFixed(4));
+}
+await tick();
+setInterval(tick, 15 * 60 * 1000);   // match the model's candle</pre>
+      </section>
+</div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var r = window.GL1F_RUNTIME || {}, n = r.network || {}, c = (r.contracts && (r.contracts.addresses || r.contracts)) || {};
+  var rpc = n.rpcUrl || "https://rpc.genesisl1.org", chain = String(n.chainId || 29);
+  var show = { "api-rpc": rpc, "api-chain": chain, "api-registry": c.registry || "Not deployed yet", "api-runtime": c.runtime || "Not deployed yet", "api-nft": c.nft || "Not deployed yet" };
+  Object.keys(show).forEach(function (id) { var el = document.getElementById(id); if (el) el.textContent = show[id]; });
+  document.querySelectorAll("pre.code").forEach(function (pre) {
+    pre.textContent = pre.textContent.replace(/RPC_URL/g, rpc).replace(/CHAIN_ID/g, chain).replace(/"REGISTRY"/g, JSON.stringify(c.registry || "0x…registry")).replace(/"RUNTIME"/g, JSON.stringify(c.runtime || "0x…runtime"));
+  });
+});
+</script>
