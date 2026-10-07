@@ -1,4 +1,4 @@
-/*! GL1F Crypto 3D car v1.12.1. MIT License, Copyright (c) 2026 Decentralized Science Labs. Source: https://github.com/GenesisL1/gl1f-crypto */
+/*! GL1F Crypto 3D car v1.13.0. MIT License, Copyright (c) 2026 Decentralized Science Labs. Source: https://github.com/GenesisL1/gl1f-crypto */
 /*! Bundles three.js r160: MIT License, Copyright 2010-2023 Three.js Authors. */
 var GL1FCar3D=(()=>{var Rr=Object.defineProperty;var Il=Object.getOwnPropertyDescriptor;var Ul=Object.getOwnPropertyNames;var Dl=Object.prototype.hasOwnProperty;var Nl=(i,t)=>{for(var e in t)Rr(i,e,{get:t[e],enumerable:!0})},Ol=(i,t,e,n)=>{if(t&&typeof t=="object"||typeof t=="function")for(let s of Ul(t))!Dl.call(i,s)&&s!==e&&Rr(i,s,{get:()=>t[s],enumerable:!(n=Il(t,s))||n.enumerable});return i};var Fl=i=>Ol(Rr({},"__esModule",{value:!0}),i);var kg={};Nl(kg,{mountCar:()=>Hg});/**
  * @license

@@ -1,6 +1,6 @@
 {
   "name": "gl1f-crypto",
-  "version": "1.12.1",
+  "version": "1.13.0",
   "description": "GL1F Crypto: no-code machine learning for crypto markets on GenesisL1. Dataset, training, backtest, Model NFT deployment with per-model licenses and publicly burnable protocol fees, and verifiable inference.",
   "license": "MIT",
   "private": true,
@@ -25,7 +25,7 @@
     "test:contracts": "python3 scripts/generate_crypto_contracts.py --check && node tests/test_crypto_fee_burn.mjs && node tests/test_crypto_admin_licenses.mjs && node tests/sdk_check.mjs",
     "test:backtest": "node tests/backtest_rules.mjs",
     "owner:tx": "node scripts/owner_tx.mjs",
-    "test:world": "node tests/world_signals_check.mjs && node tests/world_data_fetch_check.mjs && node tests/report_check.mjs && node tests/profile_features_check.mjs && node tests/replay_window_check.mjs",
+    "test:world": "node tests/world_signals_check.mjs && node tests/world_data_fetch_check.mjs && node tests/report_check.mjs && node tests/profile_features_check.mjs && node tests/replay_window_check.mjs && node tests/backtest_window_check.mjs",
     "world:data": "node scripts/fetch_world_data.mjs"
   },
   "devDependencies": {

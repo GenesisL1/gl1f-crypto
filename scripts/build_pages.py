@@ -393,6 +393,13 @@ def model_article():
   <section class="card mp-ask" aria-labelledby="mp-run-h">
     <div class="mp-card-head"><h2 id="mp-run-h">Ask the model</h2><span class="mp-pill" id="mp-run-pill">Free · no wallet, no gas</span></div>
     <p class="mp-desc" id="mp-run-desc">It answers the question above for the latest completed candle: your browser computes the inputs from public exchange data, and the model answers on GenesisL1.</p>
+    <div class="mp-thr" role="group" aria-labelledby="mp-thr-label">
+      <span class="mp-thr-label" id="mp-thr-label">Answer <b>Yes</b> when the probability is</span>
+      <label class="mp-thr-field">from <input id="mp-thr" type="number" min="0" max="1" step="0.01" value="0.50" inputmode="decimal" /></label>
+      <label class="mp-thr-field">to <input id="mp-thr-max" type="number" min="0" max="1" step="0.01" value="1.00" inputmode="decimal" /></label>
+      <button class="mp-thr-reset" type="button" id="mp-thr-reset" hidden>Reset</button>
+      <span class="mp-thr-note" id="mp-thr-note" aria-live="polite">The default: Yes at 50% or more.</span>
+    </div>
     <div class="mp-run-row"><button class="btn hype lg" type="button" id="mp-run-btn">Run on the latest candle</button><span class="small muted" id="mp-run-note"></span></div>
     <div class="mp-result" id="mp-result" aria-live="polite"><p class="mp-result-empty">The answer appears here: <b>Yes</b> or <b>No</b>, with the probability the model gives it.</p></div>
   </section>
@@ -518,6 +525,8 @@ def html_to_md(fragment, base):
 def links_md():
     return (f"## Links\n\n- [Studio]({ORIGIN}app.html): build, backtest and publish a Crypto AI model ([Markdown]({ORIGIN}app.md))\n"
             f"- [Marketplace]({ORIGIN}market.html): published Crypto AI model NFTs ([Markdown]({ORIGIN}market.md))\n- [Docs]({ORIGIN}docs.html) ([Markdown]({ORIGIN}docs.md))\n"
+            f"- [MCP server for AI agents]({ORIGIN}api.html#mcp): {ORIGIN}mcp (Streamable HTTP, no key), tools list_models, get_model, ask_model and trading_rules\n"
+            f"- [Yes threshold]({ORIGIN}docs.html#threshold): a model's answer is yes when threshold <= P <= threshold_max (defaults 0.5 and 1)\n"
             f"- [Terms of Service]({ORIGIN}legal/terms.html) ([Markdown]({ORIGIN}legal/terms.md))\n- [GL1F On-Chain Use License]({ORIGIN}legal/onchain-use-1.0.html) ([Markdown]({ORIGIN}legal/onchain-use-1.0.md))\n"
             f"- [Everything in one file]({ORIGIN}llms-full.txt)\n- [Source code](https://github.com/GenesisL1/gl1f-crypto) (MIT)\n")
 

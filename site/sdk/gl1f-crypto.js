@@ -85,6 +85,18 @@ var VENUES = Object.freeze({
   "hyperliquid-perp": Object.freeze({ exchange: "hyperliquid", name: "Hyperliquid", short: "Hyperliquid", btc: "BTC" })
 });
 var EXCHANGE_VENUE = Object.freeze({ binance: "binance-usdm", coinbase: "coinbase-spot", hyperliquid: "hyperliquid-perp" });
+function horizonWords(bars, candle) {
+  const m = Number(bars) * (INTERVAL_MIN[candle] || NaN);
+  if (!Number.isFinite(m) || m <= 0) return "the horizon";
+  const [n, unit] = m % 1440 === 0 ? [m / 1440, "day"] : m % 60 === 0 ? [m / 60, "hour"] : [m, "minute"];
+  return `${n} ${unit}${n === 1 ? "" : "s"}`;
+}
+function questionText(profile) {
+  const l = profile?.label;
+  if (!l) return null;
+  const up = l.direction !== "down", coin = profile.ticker || profile.symbol || "the coin";
+  return `Will ${coin} ${up ? "rise" : "fall"} ${l.movePct}% before it ${up ? "drops" : "bounces"} ${l.retracePct}% within ${horizonWords(l.horizonBars, profile.candle)}?`;
+}
 function normalizeProfile(raw) {
   if (!raw || typeof raw !== "object") return null;
   if (raw.schema && raw.schema !== PROFILE_SCHEMA) throw new Error(`Unsupported input profile schema ${raw.schema}`);
@@ -145,7 +157,29 @@ function profileFromMeta(meta) {
   }
 }
 
+// src/studio/threshold.js
+var DEFAULT_THRESHOLD = 0.5;
+var DEFAULT_THRESHOLD_MAX = 1;
+var given = (v) => v !== void 0 && v !== null && v !== "";
+function yesRange({ threshold, thresholdMax } = {}) {
+  const lo = given(threshold) ? Number(threshold) : DEFAULT_THRESHOLD, hi = given(thresholdMax) ? Number(thresholdMax) : DEFAULT_THRESHOLD_MAX;
+  if (!(lo >= 0 && lo <= 1)) throw new RangeError("threshold must be a number from 0 to 1");
+  if (!(hi >= 0 && hi <= 1)) throw new RangeError("thresholdMax must be a number from 0 to 1");
+  if (lo > hi) throw new RangeError("threshold must not be above thresholdMax");
+  return { threshold: lo, thresholdMax: hi };
+}
+function decide(probability, range = {}) {
+  const { threshold, thresholdMax } = yesRange(range), p = Number(probability);
+  const yes = Number.isFinite(p) && p >= threshold && p <= thresholdMax;
+  return { yes, answer: yes ? "yes" : "no", threshold, thresholdMax };
+}
+function rangeText({ threshold = DEFAULT_THRESHOLD, thresholdMax = DEFAULT_THRESHOLD_MAX } = {}, digits = 2) {
+  const lo = Number(threshold).toFixed(digits);
+  return Number(thresholdMax) >= 1 ? `P ≥ ${lo}` : `${lo} ≤ P ≤ ${Number(thresholdMax).toFixed(digits)}`;
+}
+
 // src/sdk/gl1f-crypto.js
+var candleMinutes = (c) => parseInt(c, 10) * ({ m: 1, h: 60, d: 1440, w: 10080 }[String(c).slice(-1)] || 1);
 var PRICING = ["free", "tips", "paid"];
 var VIEW_TYPES = { AccessView: [{ name: "modelId", type: "bytes32" }, { name: "packedHash", type: "bytes32" }, { name: "deadline", type: "uint256" }] };
 var OWNER_TYPES = { OwnerView: VIEW_TYPES.AccessView };
@@ -223,10 +257,16 @@ var GL1FCrypto = class {
   }
   // Runs the model on GenesisL1. Free/tips: no options. Paid: { accessKey } (private key or ethers Wallet with an active
   // plan), { owner } (the admin's signer) or { payer } (a signer that pays the fee per run in a transaction).
-  async predict(model, valuesQ, { accessKey, owner, payer, deadlineSec = 300 } = {}) {
+  // { threshold, thresholdMax } (optional, defaults 0.5 and 1) set when the answer is yes; they are checked before the
+  // model runs, so a payer never pays for a call with a wrong range.
+  async predict(model, valuesQ, { accessKey, owner, payer, deadlineSec = 300, threshold, thresholdMax } = {}) {
+    const range = yesRange({ threshold, thresholdMax });
     const m = typeof model === "object" ? model : await this.model(model);
     if (valuesQ.length !== m.nFeatures) throw new Error(`Model #${m.tokenId} takes ${m.nFeatures} inputs, got ${valuesQ.length}`);
-    const packed = packInputs(valuesQ), done = (scoreQ, via, extra = {}) => ({ scoreQ: BigInt(scoreQ), probability: sigmoid(Number(scoreQ) / m.scaleQ), via, ...extra });
+    const packed = packInputs(valuesQ), done = (scoreQ, via, extra = {}) => {
+      const probability = sigmoid(Number(scoreQ) / m.scaleQ);
+      return { scoreQ: BigInt(scoreQ), probability, via, ...decide(probability, range), ...extra };
+    };
     if (payer) {
       const tx = await this.runtime.connect(payer).predictTx(m.modelId, packed, { value: m.pricingMode === 2 ? m.feeWei : 0n });
       const receipt = await tx.wait(), ev = receipt.logs.map((l) => {
@@ -246,6 +286,25 @@ var GL1FCrypto = class {
     if (!accessKey) throw new Error(`Model #${m.tokenId} is paid: pass { accessKey } with an active plan, { owner }, or { payer }`);
     const key = typeof accessKey === "string" ? new this.e.Wallet(accessKey) : accessKey;
     return done(await this.runtime.predictAccessView(m.modelId, packed, deadline, await key.signTypedData(domain, VIEW_TYPES, message)), "predictAccessView");
+  }
+  // The model's answer for the latest completed candle (or the candle at asOfMs), in one call: its inputs from public
+  // exchange data, the run on GenesisL1 and yes or no by { threshold, thresholdMax }. Paid models take the same
+  // { accessKey }, { owner } or { payer } as predict().
+  async ask(model, { engine, asOfMs = null, threshold, thresholdMax, accessKey, owner, payer, deadlineSec } = {}) {
+    const range = yesRange({ threshold, thresholdMax });
+    const m = typeof model === "object" ? model : await this.model(model);
+    const inputs = await this.latestInputs(m, { engine, asOfMs });
+    const r = await this.predict(m, inputs.valuesQ, { accessKey, owner, payer, deadlineSec, ...range });
+    const open = Number(inputs.selectedOpenMs), close = open + candleMinutes(m.profile.candle) * 6e4;
+    return {
+      model: m.tokenId,
+      question: questionText(m.profile),
+      market: m.profile.symbol,
+      candle: m.profile.candle,
+      candleOpen: new Date(open).toISOString(),
+      candleClose: new Date(close).toISOString(),
+      ...r
+    };
   }
   // A new access key: keep its private key secret; a plan bought for its address lets it run the model.
   newAccessKey() {
@@ -303,11 +362,17 @@ var GL1FCrypto = class {
 };
 var gl1f_crypto_default = GL1FCrypto;
 export {
+  DEFAULT_THRESHOLD,
+  DEFAULT_THRESHOLD_MAX,
   GL1FCrypto,
   OWNER_TYPES,
   PRICING,
   VIEW_TYPES,
+  decide,
   gl1f_crypto_default as default,
   packInputs,
-  quantize
+  quantize,
+  questionText,
+  rangeText,
+  yesRange
 };

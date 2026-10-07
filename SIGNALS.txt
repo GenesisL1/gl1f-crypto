@@ -1,5 +1,5 @@
 GL1F Crypto: all signals (274)
-Studio version 1.12.1. Format: Plain name (machine name): what it measures [source].
+Studio version 1.13.0. Format: Plain name (machine name): what it measures [source].
 Machine names are what a model stores; the studio shows the plain name first.
 Every value uses only what was known when the candle closed. Every signal has years of history (shown as History from ...).
 

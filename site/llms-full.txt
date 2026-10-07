@@ -1,6 +1,6 @@
 # GL1F Crypto: full text for language models
 
-Source: https://crypto.gl1f.com/ · generated 2026-10-02 · version 1.12.1
+Source: https://crypto.gl1f.com/ · generated 2026-10-02 · version 1.13.0
 
 # GL1F Crypto: launch your own Crypto AI model
 
@@ -101,6 +101,8 @@ Technically yes: every model's bytes are public on GenesisL1. Legally it depends
 - [Studio](https://crypto.gl1f.com/app.html): build, backtest and publish a Crypto AI model ([Markdown](https://crypto.gl1f.com/app.md))
 - [Marketplace](https://crypto.gl1f.com/market.html): published Crypto AI model NFTs ([Markdown](https://crypto.gl1f.com/market.md))
 - [Docs](https://crypto.gl1f.com/docs.html) ([Markdown](https://crypto.gl1f.com/docs.md))
+- [MCP server for AI agents](https://crypto.gl1f.com/api.html#mcp): https://crypto.gl1f.com/mcp (Streamable HTTP, no key), tools list_models, get_model, ask_model and trading_rules
+- [Yes threshold](https://crypto.gl1f.com/docs.html#threshold): a model's answer is yes when threshold <= P <= threshold_max (defaults 0.5 and 1)
 - [Terms of Service](https://crypto.gl1f.com/legal/terms.html) ([Markdown](https://crypto.gl1f.com/legal/terms.md))
 - [GL1F On-Chain Use License](https://crypto.gl1f.com/legal/onchain-use-1.0.html) ([Markdown](https://crypto.gl1f.com/legal/onchain-use-1.0.md))
 - [Everything in one file](https://crypto.gl1f.com/llms-full.txt)
@@ -151,6 +153,8 @@ The studio runs a published model on your device only when its license allows it
 - [Studio](https://crypto.gl1f.com/app.html): build, backtest and publish a Crypto AI model ([Markdown](https://crypto.gl1f.com/app.md))
 - [Marketplace](https://crypto.gl1f.com/market.html): published Crypto AI model NFTs ([Markdown](https://crypto.gl1f.com/market.md))
 - [Docs](https://crypto.gl1f.com/docs.html) ([Markdown](https://crypto.gl1f.com/docs.md))
+- [MCP server for AI agents](https://crypto.gl1f.com/api.html#mcp): https://crypto.gl1f.com/mcp (Streamable HTTP, no key), tools list_models, get_model, ask_model and trading_rules
+- [Yes threshold](https://crypto.gl1f.com/docs.html#threshold): a model's answer is yes when threshold <= P <= threshold_max (defaults 0.5 and 1)
 - [Terms of Service](https://crypto.gl1f.com/legal/terms.html) ([Markdown](https://crypto.gl1f.com/legal/terms.md))
 - [GL1F On-Chain Use License](https://crypto.gl1f.com/legal/onchain-use-1.0.html) ([Markdown](https://crypto.gl1f.com/legal/onchain-use-1.0.md))
 - [Everything in one file](https://crypto.gl1f.com/llms-full.txt)
@@ -185,6 +189,8 @@ Creator income (fees per inference, tips, subscriptions) goes to the model admin
 - [Studio](https://crypto.gl1f.com/app.html): build, backtest and publish a Crypto AI model ([Markdown](https://crypto.gl1f.com/app.md))
 - [Marketplace](https://crypto.gl1f.com/market.html): published Crypto AI model NFTs ([Markdown](https://crypto.gl1f.com/market.md))
 - [Docs](https://crypto.gl1f.com/docs.html) ([Markdown](https://crypto.gl1f.com/docs.md))
+- [MCP server for AI agents](https://crypto.gl1f.com/api.html#mcp): https://crypto.gl1f.com/mcp (Streamable HTTP, no key), tools list_models, get_model, ask_model and trading_rules
+- [Yes threshold](https://crypto.gl1f.com/docs.html#threshold): a model's answer is yes when threshold <= P <= threshold_max (defaults 0.5 and 1)
 - [Terms of Service](https://crypto.gl1f.com/legal/terms.html) ([Markdown](https://crypto.gl1f.com/legal/terms.md))
 - [GL1F On-Chain Use License](https://crypto.gl1f.com/legal/onchain-use-1.0.html) ([Markdown](https://crypto.gl1f.com/legal/onchain-use-1.0.md))
 - [Everything in one file](https://crypto.gl1f.com/llms-full.txt)
@@ -196,7 +202,7 @@ Creator income (fees per inference, tips, subscriptions) goes to the model admin
 
 > GL1F Crypto is a no-code crypto AI model builder on GenesisL1, an EVM Layer 1 blockchain (chain id 29). In the browser you build a dataset from Binance, Coinbase or Hyperliquid candles, train a gradient-boosted tree model with walk-forward validation, backtest it with fees, slippage and leverage, publish it as a Crypto AI model NFT and run inference that anyone can verify on-chain. Early alpha, educational, not financial advice.
 
-[Overview](https://crypto.gl1f.com/docs.html#overview)[Contracts](https://crypto.gl1f.com/docs.html#contracts)[Fees & burns](https://crypto.gl1f.com/docs.html#fees)[Model monetization](https://crypto.gl1f.com/docs.html#monetization)[Licenses](https://crypto.gl1f.com/docs.html#licenses)[Admin & multisig](https://crypto.gl1f.com/docs.html#admin)[Live stats](https://crypto.gl1f.com/docs.html#stats) [Data & signals](https://crypto.gl1f.com/docs.html#data)[Validation](https://crypto.gl1f.com/docs.html#validation)[Backtests](https://crypto.gl1f.com/docs.html#backtests)[Verify it yourself](https://crypto.gl1f.com/docs.html#verify)[Web3 API](https://crypto.gl1f.com/docs.html#web3-api)[Track record](https://crypto.gl1f.com/docs.html#track-record)[Disclaimer](https://crypto.gl1f.com/docs.html#disclaimer)[Terms of Service](https://crypto.gl1f.com/legal/terms.html)
+[Overview](https://crypto.gl1f.com/docs.html#overview)[Contracts](https://crypto.gl1f.com/docs.html#contracts)[Fees & burns](https://crypto.gl1f.com/docs.html#fees)[Model monetization](https://crypto.gl1f.com/docs.html#monetization)[Licenses](https://crypto.gl1f.com/docs.html#licenses)[Admin & multisig](https://crypto.gl1f.com/docs.html#admin)[Live stats](https://crypto.gl1f.com/docs.html#stats) [Data & signals](https://crypto.gl1f.com/docs.html#data)[Validation](https://crypto.gl1f.com/docs.html#validation)[Backtests](https://crypto.gl1f.com/docs.html#backtests)[Verify it yourself](https://crypto.gl1f.com/docs.html#verify)[Web3 API](https://crypto.gl1f.com/docs.html#web3-api)[Yes threshold](https://crypto.gl1f.com/docs.html#threshold)[MCP server](https://crypto.gl1f.com/docs.html#mcp)[Track record](https://crypto.gl1f.com/docs.html#track-record)[Disclaimer](https://crypto.gl1f.com/docs.html#disclaimer)[Terms of Service](https://crypto.gl1f.com/legal/terms.html)
 
 **Docs** / Overview Contracts pending
 
@@ -391,9 +397,9 @@ Latest Crypto AI models
 
 ## Web3 API: run any model from code.
 
-The [Web3 API page](https://crypto.gl1f.com/api.html) has the full reference, the addresses and a bot example. Every Crypto AI model can be called from your own code, in a browser or in Node 18+, with the GL1F Crypto helper [sdk/gl1f-crypto.js](https://crypto.gl1f.com/sdk/gl1f-crypto.js) and `ethers` v6. The Inference step's **Web3 API** panel shows ready code for the open model, its contract addresses and RPC.
+The [Web3 API page](https://crypto.gl1f.com/api.html) has the full reference, the addresses and a bot example. Every Crypto AI model can be called from your own code, in a browser, in Deno or in Node 18+, with the GL1F Crypto helper [sdk/gl1f-crypto.js](https://crypto.gl1f.com/sdk/gl1f-crypto.js) and `ethers` v6. The Inference step's **Web3 API** panel shows ready code for the open model, its contract addresses and RPC.
 
-import * as ethers from "ethers"; import { GL1FCrypto } from "./gl1f-crypto.js"; const gl1f = new GL1FCrypto({ ethers, rpcUrl, chainId: 29, registry, runtime }); const model = await gl1f.model(42); // title, question, pricing, plans, inputs const engine = await GL1FCrypto.nodeEngine(); // browser: await GL1FCrypto.browserEngine() const inputs = await gl1f.latestInputs(model, { engine }); // latest completed candle, the studio's own engine const out = await gl1f.predict(model, inputs.valuesQ); // { probability, scoreQ, via }
+import * as ethers from "ethers"; import { GL1FCrypto } from "./gl1f-crypto.js"; const gl1f = new GL1FCrypto({ ethers, rpcUrl, chainId: 29, registry, runtime }); const model = await gl1f.model(42); // title, question, pricing, plans, inputs const engine = await GL1FCrypto.nodeEngine(); // browser: await GL1FCrypto.browserEngine() const inputs = await gl1f.latestInputs(model, { engine }); // latest completed candle, the studio's own engine const out = await gl1f.predict(model, inputs.valuesQ); // { probability, yes, answer, scoreQ, via } const now = await gl1f.ask(model, { engine, threshold: 0.6 }); // the same in one call, yes at 0.6 or more
 
 | Model | Call | What it costs |
 |---|---|---|
@@ -405,6 +411,35 @@ import * as ethers from "ethers"; import { GL1FCrypto } from "./gl1f-crypto.js";
 **Access keys.** `gl1f.newAccessKey()` makes a key pair; buy a plan for its address once and keep its private key on your server or bot. Signatures expire after 5 minutes by default and cover the exact inputs, so a key cannot be replayed for other inputs. `accessStatus(model, address)` tells until which block a key works. The studio can create a key and buy a plan for it in the Web3 API panel.
 
 Inputs are the model's signals on a completed candle, quantized to integers (`quantize(values, scaleQ)`). `latestInputs` computes them with the published market engine ([sdk/gl1f-engine.js](https://crypto.gl1f.com/sdk/gl1f-engine.js)), the code the studio runs, so the score equals the studio's and the chain's. Models that use world signals fetch the same public data.
+
+## Yes or no: your threshold.
+
+A Crypto AI model gives a probability **P** that the answer to its question is yes, for the latest completed candle. By default the answer is **Yes** when P is 0.5 or more. You can set your own rule: a stricter **threshold** (Yes only at 0.6 or more, say) and an optional **upper limit**, so the answer is Yes only inside a range (from 0.6 to 0.85, say). The rule never changes the probability, only the yes or no read from it.
+
+| Where | How |
+|---|---|
+| Model page | In **Ask the model**: "Answer Yes when the probability is from … to …" (default 0.50 to 1.00). The answer on screen follows the fields at once, without running the model again, and a link can carry them: `model.html?id=1&threshold=0.6&threshold_max=0.85`. |
+| Studio inference | **Signal threshold** and **Upper limit**; the receipt records both. |
+| Backtest | **Entry threshold** and **Upper P limit**: a trade opens only when P is in the range. The threshold table compares lower thresholds under your upper limit. |
+| Web3 API | `predict(model, valuesQ, { threshold, thresholdMax })` and `ask(model, { engine, threshold, thresholdMax })` return `yes` and `answer`; `decide(probability, { threshold, thresholdMax })` applies the rule to a probability you already have. |
+| MCP server | `ask_model` and `trading_rules` take `threshold` and `threshold_max`. |
+
+Both limits are numbers from 0 to 1, the threshold not above the upper limit; the defaults are 0.5 and 1. A higher threshold usually leaves fewer signals: before trusting one, check in the backtest how many trades it leaves and whether nearby thresholds do about as well. Educational, not investment advice.
+
+## MCP server: models for AI agents.
+
+AI assistants such as Claude and ChatGPT connect to outside tools through the Model Context Protocol (MCP). GL1F Crypto has an MCP server at `https://crypto.gl1f.com/mcp`: connect it, and the assistant can list Crypto AI models, read one, ask it for its current answer and get the rules its backtest trades by. It is read-only and needs no key, wallet or login.
+
+| Tool | What it does |
+|---|---|
+| `list_models` | Published models, newest first: number, title, question, market and candle, access (free, tips or paid) and page. |
+| `get_model` | One model's details, with the trading rules its backtest uses. |
+| `ask_model` | Its answer for the latest completed candle: yes or no, the probability, the candle and the model's page. Optional `threshold` and `threshold_max` (defaults 0.5 and 1). Free and tip models. |
+| `trading_rules` | The backtest's rules: direction, the signal range, entry, target and stop from the EMA baseline, and the time limit. |
+
+**Connect it.** Claude: add a custom connector with the address above. ChatGPT: turn on developer mode, then add a connector (app) with the address and no authentication. Claude Code: `claude mcp add --transport http gl1f-crypto https://crypto.gl1f.com/mcp`. Any MCP client that speaks Streamable HTTP works, and local agents can run it over stdio from the repository (`deno task stdio` in `mcp/`).
+
+It runs a model the same way as the model page, once per candle for everyone who asks: the inputs from public exchange data, the answer from GenesisL1. Paid models are not available through it, and each client may send 120 requests a minute. The code is in the repository's `mcp/` folder (Deno, MIT), with `deploy/setup-mcp.sh` to run your own.
 
 ## A track record anyone can check.
 
@@ -441,14 +476,14 @@ Scores reported: ROC AUC, log-loss, balanced accuracy, precision and recall at 0
 
 ## The rules of the test drive.
 
-- The worker replays the Crypto AI model's exact signals over the chosen period using the same engine and feature seed as the training dataset.
-- A signal is a candle whose probability is at or above the threshold. The trade enters at the next candle's open, long for Up Crypto AI models and short for Down Crypto AI models.
+- The worker replays the Crypto AI model's exact signals over the chosen period with the same engine as the training dataset. The signals warm up on the 120 days before the period (or from the training data's start, when that is later), so any past period can be tested, including one before the training data.
+- A signal is a candle whose probability is at or above the entry threshold, and at or below the upper P limit when one is set (by default 1: no limit). The trade enters at the next candle's open, long for Up Crypto AI models and short for Down Crypto AI models.
 - Target and stop are the label's levels, measured from the EMA baseline at the signal candle. If both are touched in one candle, the stop wins. A candle that opens beyond a level exits at that open. Signals whose entry price is already past the target or the stop are skipped and counted separately.
 - Without a hit, the trade exits at the close of the last horizon candle. One position at a time; by default the whole account is the margin at 1× (no leverage), and both can be changed (see below).
 - Fees are charged on entry and exit; slippage worsens both fills. Funding payments, partial fills, liquidity and outages are not modelled.
 - The default period is the Crypto AI model's final test period, which it never trained on. Earlier periods are in-sample and flagged.
 
-**Entries and leverage.** A signal exists only after its candle has closed, so the earliest trade is the next candle's open. There is no trade if that candle had no trades (a gap-filled bucket), if there is no next candle, or if its open is already beyond the target or the stop the signal defined. One position at a time; when the target and the stop are both touched in one candle, the stop is assumed first. Leverage from 1× to 100× multiplies returns on margin and fees on the full notional; with isolated margin, a position is liquidated when the adverse move reaches about 1 / leverage minus the maintenance margin, losing that trade's margin. Funding payments are not included. Coinbase spot runs without leverage.
+**Entries and leverage.** A signal exists only after its candle has closed, so the earliest trade is the next candle's open. There is no trade if that candle had no trades (a gap-filled bucket), if there is no next candle, or if its open is already beyond the target or the stop the signal defined. One position at a time; when the target and the stop are both touched in one candle, the stop is assumed first. Leverage, any whole number from 1× to 100×, multiplies returns on margin and fees on the full notional; with isolated margin, a position is liquidated when the adverse move reaches about 1 / leverage minus the maintenance margin, losing that trade's margin. Funding payments are not included. Coinbase spot runs without leverage.
 
 **07** / Verify it yourself
 

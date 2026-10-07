@@ -770,6 +770,24 @@ pre.code { margin: 10px 0 0; padding: 12px 14px; border-radius: var(--r-sm); bac
 .cookie-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
 @media (max-width: 520px) { .cookie-card { left: 12px; right: 12px; width: auto; } }
 @media (prefers-reduced-motion: reduce) { .cookie-card { transition: none; } }
+/* The consent prompt: over a dimmed page until the visitor chooses; a bottom sheet on phones, centred on wider screens. */
+html.cookie-open { overflow: hidden; }
+.cookie-layer { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; justify-content: center; padding: 16px 16px max(16px, env(safe-area-inset-bottom)); background: rgba(8, 10, 20, .5); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); opacity: 0; transition: opacity .25s ease; }
+.cookie-layer.show { opacity: 1; }
+.cookie-prompt { width: 100%; max-width: 540px; padding: 26px; border-radius: 22px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); box-shadow: 0 30px 90px rgba(0, 0, 0, .38); font-size: .96rem; line-height: 1.55; transform: translateY(30px); transition: transform .34s cubic-bezier(.2, .8, .2, 1); }
+.cookie-layer.show .cookie-prompt { transform: none; }
+@media (min-width: 720px) { .cookie-layer { align-items: center; } }
+.cookie-head { display: flex; align-items: center; gap: 14px; margin: 0 0 12px; }
+.cookie-head h2 { margin: 0; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+.cookie-badge { flex: none; display: inline-grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: var(--bg-2); font-size: 1.45rem; }
+.cookie-prompt p { margin: 0 0 12px; color: var(--ink-2); }
+.cookie-prompt .cookie-gpc { font-size: .86rem; color: var(--muted); }
+.cookie-prompt .cookie-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0 14px; }
+.cookie-prompt .cookie-actions .btn, .cookie-prompt .cookie-actions .btn2 { width: 100%; min-height: 50px; justify-content: center; font-size: 1rem; font-weight: 650; }
+.cookie-prompt .cookie-fine { margin: 0; font-size: .8rem; color: var(--muted); }
+.cookie-prompt a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+@media (max-width: 420px) { .cookie-prompt { padding: 22px 20px; } .cookie-prompt .cookie-actions { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .cookie-layer, .cookie-prompt { transition: none; } }
 .legal-links { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 0 0; font-size: .8rem; }
 .legal-links a { color: var(--muted); }
 /* Protocol admin */
@@ -909,6 +927,18 @@ a.buy-badge:hover { filter: brightness(1.08); }
 .mp-answer.yes .mp-meter i { background: var(--hype); }
 .mp-meter-mid { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; border-radius: 2px; background: var(--ink-2); opacity: .5; }
 .mp-meter-scale { display: flex; justify-content: space-between; margin-top: -4px; font: 500 .68rem/1 var(--font-mono); color: var(--faint); }
+/* The Yes range of "Ask the model": Yes when from <= P <= to (defaults 0.50 and 1.00), and its band on the meter. */
+.mp-thr { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 var(--s4); padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); font-size: .9rem; }
+.mp-thr-label { color: var(--muted); }
+.mp-thr-label b { color: var(--ink); }
+.mp-thr-field { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.mp-thr-field input { width: 5.4em; padding: 6px 8px; font: 500 .92rem/1.2 var(--font-mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line-2); border-radius: 8px; }
+.mp-thr-field input:focus { outline: 2px solid color-mix(in srgb, var(--hype) 45%, transparent); outline-offset: 1px; }
+.mp-thr-field input[aria-invalid="true"] { border-color: var(--bad); }
+.mp-thr-reset { padding: 4px 10px; font-size: .8rem; color: var(--ink-2); background: transparent; border: 1px solid var(--line-2); border-radius: 999px; cursor: pointer; }
+.mp-thr-note { flex-basis: 100%; font-size: .8rem; color: var(--faint); }
+.mp-thr-note.bad { color: var(--bad); }
+.mp-meter-band { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: color-mix(in srgb, var(--hype) 22%, transparent); }
 .mp-answer-text { margin: var(--s1) 0 0; font-size: .96rem; line-height: 1.55; color: var(--ink-2); }
 .mp-answer-text b { color: var(--ink); font-weight: 650; }
 .mp-answer-meta { margin: 0; font-size: .8rem; line-height: 1.5; color: var(--muted); }

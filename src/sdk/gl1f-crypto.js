@@ -3,11 +3,22 @@
 //   const gl1f = new GL1FCrypto({ ethers, rpcUrl, registry, runtime, nft });
 //   const model = await gl1f.model(42);                                   // title, question, pricing, plans, inputs
 //   const inputs = await gl1f.latestInputs(model, { engine });            // the model's inputs on the latest candle
-//   const out = await gl1f.predict(model, inputs.valuesQ, { accessKey }); // { scoreQ, probability, via }
+//   const out = await gl1f.predict(model, inputs.valuesQ, { accessKey }); // { scoreQ, probability, via, yes, answer, ... }
+//   const now = await gl1f.ask(42, { engine, threshold: 0.6 });         // all of it in one call, for the latest candle
+// Yes or no: the answer is yes when threshold <= probability <= thresholdMax (defaults 0.5 and 1: yes at 50% or more).
+// Every call that runs a model takes { threshold, thresholdMax }; decide(probability, { threshold, thresholdMax }) does
+// the same for a probability you already have.
 // Free and tips models: a free read (predictView). Paid models: an access key with an active plan signs each request
 // (predictAccessView, a free read), the admin's wallet signs (predictOwnerView), or a wallet pays per run (predictTx).
 import { ABI_REGISTRY, ABI_RUNTIME, ABI_MODELNFT } from "../studio/abis.js";
-import { unpackFeatures, profileFromMeta } from "../studio/profile.js";
+import { unpackFeatures, profileFromMeta, questionText } from "../studio/profile.js";
+import { decide, yesRange, rangeText, DEFAULT_THRESHOLD, DEFAULT_THRESHOLD_MAX } from "../studio/threshold.js";
+
+// The question a model answers, worded as on its page ("Will ZEC rise 3% before it drops 1% within 5 hours?").
+export { questionText };
+// The Yes range: decide(p, { threshold, thresholdMax }) → { yes, answer, threshold, thresholdMax }.
+export { decide, yesRange, rangeText, DEFAULT_THRESHOLD, DEFAULT_THRESHOLD_MAX };
+const candleMinutes = (c) => parseInt(c, 10) * ({ m: 1, h: 60, d: 1440, w: 10080 }[String(c).slice(-1)] || 1);
 
 export const PRICING = ["free", "tips", "paid"];
 export const VIEW_TYPES = { AccessView: [{ name: "modelId", type: "bytes32" }, { name: "packedHash", type: "bytes32" }, { name: "deadline", type: "uint256" }] };
@@ -62,10 +73,16 @@ export class GL1FCrypto {
   }
   // Runs the model on GenesisL1. Free/tips: no options. Paid: { accessKey } (private key or ethers Wallet with an active
   // plan), { owner } (the admin's signer) or { payer } (a signer that pays the fee per run in a transaction).
-  async predict(model, valuesQ, { accessKey, owner, payer, deadlineSec = 300 } = {}) {
+  // { threshold, thresholdMax } (optional, defaults 0.5 and 1) set when the answer is yes; they are checked before the
+  // model runs, so a payer never pays for a call with a wrong range.
+  async predict(model, valuesQ, { accessKey, owner, payer, deadlineSec = 300, threshold, thresholdMax } = {}) {
+    const range = yesRange({ threshold, thresholdMax });
     const m = typeof model === "object" ? model : await this.model(model);
     if (valuesQ.length !== m.nFeatures) throw new Error(`Model #${m.tokenId} takes ${m.nFeatures} inputs, got ${valuesQ.length}`);
-    const packed = packInputs(valuesQ), done = (scoreQ, via, extra = {}) => ({ scoreQ: BigInt(scoreQ), probability: sigmoid(Number(scoreQ) / m.scaleQ), via, ...extra });
+    const packed = packInputs(valuesQ), done = (scoreQ, via, extra = {}) => {
+      const probability = sigmoid(Number(scoreQ) / m.scaleQ);
+      return { scoreQ: BigInt(scoreQ), probability, via, ...decide(probability, range), ...extra };
+    };
     if (payer) {
       const tx = await this.runtime.connect(payer).predictTx(m.modelId, packed, { value: m.pricingMode === 2 ? m.feeWei : 0n });
       const receipt = await tx.wait(), ev = receipt.logs.map((l) => { try { return this.runtime.interface.parseLog(l); } catch { return null; } }).find((x) => x?.name === "Inference");
@@ -79,6 +96,18 @@ export class GL1FCrypto {
     if (!accessKey) throw new Error(`Model #${m.tokenId} is paid: pass { accessKey } with an active plan, { owner }, or { payer }`);
     const key = typeof accessKey === "string" ? new this.e.Wallet(accessKey) : accessKey;
     return done(await this.runtime.predictAccessView(m.modelId, packed, deadline, await key.signTypedData(domain, VIEW_TYPES, message)), "predictAccessView");
+  }
+  // The model's answer for the latest completed candle (or the candle at asOfMs), in one call: its inputs from public
+  // exchange data, the run on GenesisL1 and yes or no by { threshold, thresholdMax }. Paid models take the same
+  // { accessKey }, { owner } or { payer } as predict().
+  async ask(model, { engine, asOfMs = null, threshold, thresholdMax, accessKey, owner, payer, deadlineSec } = {}) {
+    const range = yesRange({ threshold, thresholdMax });
+    const m = typeof model === "object" ? model : await this.model(model);
+    const inputs = await this.latestInputs(m, { engine, asOfMs });
+    const r = await this.predict(m, inputs.valuesQ, { accessKey, owner, payer, deadlineSec, ...range });
+    const open = Number(inputs.selectedOpenMs), close = open + candleMinutes(m.profile.candle) * 60_000;
+    return { model: m.tokenId, question: questionText(m.profile), market: m.profile.symbol, candle: m.profile.candle,
+      candleOpen: new Date(open).toISOString(), candleClose: new Date(close).toISOString(), ...r };
   }
   // A new access key: keep its private key secret; a plan bought for its address lets it run the model.
   newAccessKey() { const w = this.e.Wallet.createRandom(); return { address: w.address, privateKey: w.privateKey }; }

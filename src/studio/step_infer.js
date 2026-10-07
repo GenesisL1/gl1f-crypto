@@ -1,5 +1,6 @@
 // MIT License — Copyright (c) 2026 Decentralized Science Labs
 // Step 4 · Inference
+import { decide, rangeText } from "./threshold.js";
 import { $, el, fmtInt, fmtPct, fmtPrice, fmtUtc, shortHex, setKV, renderStats, setPill, setProgress, showError, segmented, downloadJson, downloadText, sha256Hex, table, csvCell, renderPager, buyBadge, formatL1 } from "./ui.js";
 import { replayReport, compareReports, quantizeRow } from "./report.js";
 import { chainAvailable, listModels, loadChainModel, predictOnChain, modelPage, modelDetails, cryptoLive, localRunPermission, apiClient, apiConfig, walletSigner, listingsFor } from "./chain.js";
@@ -28,7 +29,7 @@ export function initInfer(ctx) {
     drop: $("#in-drop"), file: $("#in-file"),
     model: $("#in-model"), title: $("#in-model-title"), sub: $("#in-model-sub"), tag: $("#in-model-tag"), profileKv: $("#in-profile-kv"),
     manual: $("#in-manual"), mExchange: $("#in-m-exchange"), mCandle: $("#in-m-candle"), mFamily: $("#in-m-family"), mSeed: $("#in-m-seed"),
-    market: $("#in-market"), markets: $("#in-markets"), asofField: $("#in-asof-field"), asof: $("#in-asof"), threshold: $("#in-threshold"),
+    market: $("#in-market"), markets: $("#in-markets"), asofField: $("#in-asof-field"), asof: $("#in-asof"), threshold: $("#in-threshold"), thresholdMax: $("#in-threshold-max"), markMax: $("#in-prob-mark-max"),
     verifyWrap: $("#in-verify-wrap"), verify: $("#in-verify"), pill: $("#in-pill"), cancel: $("#in-cancel"), run: $("#in-run"),
     box: $("#in-run-box"), stage: $("#in-stage"), pct: $("#in-pct"), bar: $("#in-bar"), progress: $("#in-progress"), message: $("#in-message"),
     error: $("#in-error"), result: $("#in-result"), signal: $("#in-signal"), signalLabel: $("#in-signal-label"), probability: $("#in-probability"),
@@ -126,7 +127,7 @@ export function initInfer(ctx) {
       `const out = await gl1f.predict(model, inputs.valuesQ, { accessKey: process.env.GL1F_ACCESS_KEY });`,
       `// or pay per run from a wallet: await gl1f.predict(model, inputs.valuesQ, { payer: walletSigner })`);
     else lines.push(``, `const out = await gl1f.predict(model, inputs.valuesQ);   // a free read: no key, no gas`);
-    lines.push(`console.log(model.title, "P =", out.probability.toFixed(4), "via", out.via);`);
+    lines.push(`console.log(model.title, "P =", out.probability.toFixed(4), out.answer, "via", out.via);   // yes at 0.5 or more; pass { threshold, thresholdMax } to change it`);
     return lines.join("\n");
   }
   async function renderApi(m) {
@@ -397,7 +398,7 @@ export function initInfer(ctx) {
       }
       ui.pct.textContent = `${setProgress(ui.bar, ui.progress, 1)}%`;
       const vectorSha = await sha256Hex(vector.valuesQ.join(","));
-      last = { model: m, profile: p, vector, scoreQ, probability, chainCheck, vectorSha, threshold: Number(ui.threshold.value), createdAt: new Date().toISOString() };
+      last = { model: m, profile: p, vector, scoreQ, probability, chainCheck, vectorSha, threshold: Number(ui.threshold.value), thresholdMax: Number(ui.thresholdMax.value), createdAt: new Date().toISOString() };
       renderResult(last);
       setPill(ui.pill, chainCheck?.match === false ? "On-chain mismatch" : "Done", chainCheck?.match === false ? "bad" : "ok");
       ctx.stepStatus("infer", `${fmtPct(probability)} · ${vector.symbol} ${vector.candle}`, true);
@@ -421,15 +422,17 @@ export function initInfer(ctx) {
 
   function renderResult(r) {
     const { vector, probability, profile: p } = r;
-    const threshold = Number.isFinite(r.threshold) ? Math.min(1, Math.max(0, r.threshold)) : 0.5;
-    const on = probability >= threshold;
+    let range;   // the Yes range from the two fields: threshold <= P <= upper limit (defaults 0.5 and 1)
+    try { range = decide(probability, { threshold: r.threshold, thresholdMax: r.thresholdMax }); } catch { range = null; }
+    const threshold = range?.threshold ?? 0.5, on = !!range?.yes;
     ui.signal.classList.toggle("on", on);
     ui.probability.textContent = fmtPct(probability, 1);
-    ui.decision.textContent = on ? "Signal" : "No signal";
+    ui.decision.textContent = !range ? "Check the range" : on ? "Signal" : "No signal";
     ui.fill.style.width = `${(probability * 100).toFixed(2)}%`;
     ui.mark.style.left = `${(threshold * 100).toFixed(2)}%`;
+    if (ui.markMax) { ui.markMax.hidden = !(range && range.thresholdMax < 1); if (range) ui.markMax.style.left = `${(range.thresholdMax * 100).toFixed(2)}%`; }
     ui.signalLabel.textContent = p.label ? `P(${p.label.direction === "down" ? "down" : "up"} target first)` : "P(class 1)";
-    ui.signalSub.textContent = `${vector.symbol} · ${vector.exchangeName} · ${vector.candle} candle closed ${fmtUtc(vector.signalAvailableMs)} · threshold ${threshold.toFixed(2)}`;
+    ui.signalSub.textContent = `${vector.symbol} · ${vector.exchangeName} · ${vector.candle} candle closed ${fmtUtc(vector.signalAvailableMs)} · ${range ? `signal when ${rangeText(range)}` : "the upper limit must not be below the threshold"}`;
     const candleMs = INTERVAL_MIN[vector.candle] * 60_000, items = [
       { label: "Candle close", value: fmtPrice(vector.candleData.close) },
     ];
@@ -465,7 +468,8 @@ export function initInfer(ctx) {
       candle: { openUtc: new Date(v.selectedOpenMs).toISOString(), closeUtc: new Date(v.signalAvailableMs).toISOString(), ...v.candleData, emaBaseline: v.baseline },
       target: r.profile.label ? { ...r.profile.label, horizon: horizonLabel(r.profile.label.horizonBars, v.candle) } : null,
       replay: { featureFamily: v.featureFamily, featureVersion: v.featureVersion, fetchStartUtc: new Date(v.fetchStartMs).toISOString(), warmupSource: v.warmupSource, serverTimeUtc: new Date(v.serverTimeMs).toISOString() },
-      output: { scoreQ: String(r.scoreQ), probability: r.probability, threshold: r.threshold, signal: r.probability >= r.threshold },
+      output: (() => { let d = null; try { d = decide(r.probability, { threshold: r.threshold, thresholdMax: r.thresholdMax }); } catch {}
+        return { scoreQ: String(r.scoreQ), probability: r.probability, threshold: d?.threshold ?? r.threshold, thresholdMax: d?.thresholdMax ?? r.thresholdMax, signal: !!d?.yes }; })(),
       onChain: r.chainCheck,
       vector: { sha256: r.vectorSha, features: v.features, values: v.values, valuesQ: v.valuesQ },
     };
@@ -480,7 +484,9 @@ export function initInfer(ctx) {
     const lines = ["feature,value,value_q", ...v.features.map((name, i) => [name, v.values[i], v.valuesQ[i]].map(csvCell).join(","))];
     downloadText(`gl1f-vector-${v.symbol}-${v.candle}.csv`, lines.join("\n") + "\n", "text/csv");
   });
-  ui.threshold.addEventListener("input", () => { if (last && !ui.result.hidden) { last.threshold = Number(ui.threshold.value); renderResult(last); } });
+  for (const node of [ui.threshold, ui.thresholdMax]) node?.addEventListener("input", () => {
+    if (last && !ui.result.hidden) { last.threshold = Number(ui.threshold.value); last.thresholdMax = Number(ui.thresholdMax.value); renderResult(last); }
+  });
   ui.refresh.addEventListener("click", () => loadList(list.page || 0));
   ui.file.addEventListener("change", async () => {
     const file = ui.file.files?.[0];

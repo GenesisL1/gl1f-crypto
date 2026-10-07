@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "ethers": "npm:ethers@6.13.4"
+  },
+  "tasks": {
+    "stdio": "deno run --allow-net --allow-env --allow-read mcp.js --stdio",
+    "http": "deno run --allow-net --allow-env --allow-read mcp.js --http=127.0.0.1:8787",
+    "test": "deno test --no-lock --allow-read --allow-env --allow-net test/"
+  }
+}

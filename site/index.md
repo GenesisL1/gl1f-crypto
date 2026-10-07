@@ -97,6 +97,8 @@ Technically yes: every model's bytes are public on GenesisL1. Legally it depends
 - [Studio](https://crypto.gl1f.com/app.html): build, backtest and publish a Crypto AI model ([Markdown](https://crypto.gl1f.com/app.md))
 - [Marketplace](https://crypto.gl1f.com/market.html): published Crypto AI model NFTs ([Markdown](https://crypto.gl1f.com/market.md))
 - [Docs](https://crypto.gl1f.com/docs.html) ([Markdown](https://crypto.gl1f.com/docs.md))
+- [MCP server for AI agents](https://crypto.gl1f.com/api.html#mcp): https://crypto.gl1f.com/mcp (Streamable HTTP, no key), tools list_models, get_model, ask_model and trading_rules
+- [Yes threshold](https://crypto.gl1f.com/docs.html#threshold): a model's answer is yes when threshold <= P <= threshold_max (defaults 0.5 and 1)
 - [Terms of Service](https://crypto.gl1f.com/legal/terms.html) ([Markdown](https://crypto.gl1f.com/legal/terms.md))
 - [GL1F On-Chain Use License](https://crypto.gl1f.com/legal/onchain-use-1.0.html) ([Markdown](https://crypto.gl1f.com/legal/onchain-use-1.0.md))
 - [Everything in one file](https://crypto.gl1f.com/llms-full.txt)

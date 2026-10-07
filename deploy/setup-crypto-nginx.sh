@@ -24,10 +24,13 @@
 # Optional overrides (env vars):
 #   EMAIL=you@example.com          Let's Encrypt expiry notices
 #   REDIRECT_FROM=stagecrypto.gl1f.com   also answer this name, with a 301 to the same path on DOMAIN
+#                                  (re-runs keep the one already set up; REDIRECT_FROM=none removes it)
 #   PROJECT_DIR=/var/www/...       where the site is (default /var/www/$DOMAIN)
 #   WEB_ROOT=/var/www/.../site     folder holding index.html (auto-detected)
 #   NOINDEX=1                      block search engines (default 0: this is production)
 #   DEPLOY_USER=alice              owner of the site files (default: the folder's current owner)
+#   MCP_PORT=8787                  serve the GL1F Crypto MCP server at https://$DOMAIN/mcp (automatic when the gl1f-mcp
+#                                  service is installed; MCP_PORT=off leaves it out)
 #   PRINT_CONFIG=1                 print the HTTPS vhost this would install, then exit (changes nothing)
 # =============================================================================
 set -Eeuo pipefail
@@ -40,6 +43,11 @@ NOINDEX="${NOINDEX:-0}"
 DEPLOY_USER="${DEPLOY_USER:-}"
 WEB_ROOT="${WEB_ROOT:-}"
 PRINT_CONFIG="${PRINT_CONFIG:-0}"
+MCP_PORT="${MCP_PORT:-}"
+if [[ -z "$MCP_PORT" && -f /etc/systemd/system/gl1f-mcp.service ]]; then
+  MCP_PORT="$(sed -n 's/.*--http=127\.0\.0\.1:\([0-9]*\).*/\1/p' /etc/systemd/system/gl1f-mcp.service | head -n1)"; MCP_PORT="${MCP_PORT:-8787}"
+fi
+if [[ "$MCP_PORT" == "off" ]]; then MCP_PORT=""; fi
 
 NGINX_DIR=/etc/nginx
 ACME_ROOT=/var/www/_letsencrypt
@@ -52,6 +60,14 @@ PREV_CONF=""
 CONF_FILE=""
 LINK_FILE=""
 CONFIG_TOUCHED=0
+# Re-running keeps an existing staging redirect: without REDIRECT_FROM, the name this script wrote last time is reused
+# (REDIRECT_FROM=none drops it).
+REDIRECT_KEPT=0
+if [[ -z "$REDIRECT_FROM" ]]; then
+  REDIRECT_FROM="$(grep -rhoE "^# [A-Za-z0-9.-]+ moved: the same path on ${DOMAIN//./\\.}," /etc/nginx/sites-available /etc/nginx/conf.d 2>/dev/null | head -n1 | sed -E 's/^# ([^ ]+) moved:.*/\1/' || true)"
+  [[ -n "$REDIRECT_FROM" ]] && REDIRECT_KEPT=1
+fi
+if [[ "$REDIRECT_FROM" == "none" ]]; then REDIRECT_FROM=""; fi
 NAMES="$DOMAIN${REDIRECT_FROM:+ $REDIRECT_FROM}"
 ZONE="$(printf '%s' "$DOMAIN" | tr -c 'a-zA-Z0-9' '_')_tls"
 
@@ -59,6 +75,7 @@ log()  { printf '\033[1;32m[+]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[!]\033[0m %s\n' "$*"; }
 err()  { printf '\033[1;31m[x]\033[0m %s\n' "$*" >&2; }
 die()  { err "$*"; exit 1; }
+[[ "$REDIRECT_KEPT" == 1 ]] && log "keeping the redirect from $REDIRECT_FROM (found in the current nginx config)"
 
 reload_nginx() {
   if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet nginx; then
@@ -195,6 +212,25 @@ SEC_HEADERS_IN_LOCATION="${SEC_HEADERS//    add_header/        add_header}"
 ERROR_PAGE_LINE=""
 if [[ -f "$WEB_ROOT/404.html" ]]; then ERROR_PAGE_LINE="    error_page 404 /404.html;"; fi
 
+# The MCP server for AI agents (the gl1f-mcp service on this machine), at /mcp. X-Forwarded-For is set here, not passed
+# through, so a client cannot dodge the server's rate limit with a made-up address.
+MCP_BLOCK=""
+if [[ -n "$MCP_PORT" ]]; then
+  [[ "$MCP_PORT" =~ ^[0-9]+$ ]] || die "MCP_PORT must be a port number (or off)."
+  MCP_BLOCK="    # GL1F Crypto MCP server for AI agents (gl1f-mcp)
+    location = /mcp {
+        proxy_pass http://127.0.0.1:${MCP_PORT}/mcp;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Forwarded-For \$remote_addr;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_buffering off;
+        proxy_read_timeout 120s;
+        client_max_body_size 64k;
+    }
+"
+fi
+
 # ----------------------------------------------------------------------------
 # Config templates
 # ----------------------------------------------------------------------------
@@ -268,6 +304,7 @@ ${SEC_HEADERS}
 
 ${ERROR_PAGE_LINE}
 
+${MCP_BLOCK}
     # Never serve dotfiles (.git, .env, ...) or node_modules
     location ~ /\.(?!well-known/) { return 404; }
     location ^~ /node_modules/    { return 404; }
@@ -523,6 +560,7 @@ cat <<EOF
  Backup:       $BACKUP
  Permissions:  $OWNER:$NGINX_GROUP, dirs 2750 / files 640
 
+ MCP server:   ${MCP_PORT:+https://$DOMAIN/mcp (gl1f-mcp on port $MCP_PORT)}${MCP_PORT:-not served (install it with deploy/setup-mcp.sh, then run this again)}
  New release: replace the files in $WEB_ROOT with the new site folder. Nothing else.
 ==============================================================
 EOF

@@ -47,6 +47,7 @@ export function replayJob(m, p, startMs, endMs) {
     exchange: p.exchange, market: p.symbol, candle: p.candle, features: m.featureNames, featureFamily: p.featureFamily || "auto",
     scaleQ: m.decoded.scaleQ, warmupBars: p.warmupBars || null, featureSeedStartMs: p.featureSeedStartMs ?? null,
     basePeriod: p.label.basePeriod, startMs, endMs, btcSymbol: p.btcContext, cacheCandles: true, label: p.label,
+    exactSeedReplay: true,   // the report reproduces the dataset: replayed from the seed exactly as it was built
   };
 }
 // Rows of a replay result inside [fromMs, toMs]: complete signals, a decided label, a real (not gap-filled) candle.

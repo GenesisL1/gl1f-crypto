@@ -1,6 +1,7 @@
 // MIT License — Copyright (c) 2026 Decentralized Science Labs
 // A Crypto AI model's page: live sale (BUY and price), access and plans, a run on the latest candle, sharing, and the
 // model admin's tools for its owner. Also adds BUY badges to listed models on the model index pages.
+import { decide, yesRange, isDefaultRange } from "../studio/threshold.js";
 import { initSite, initHelp, termsAccepted, acceptTerms, bundledTermsVersion } from "../studio/site.js";
 import { licenseUpgradeOptions } from "../studio/licenses.js";
 import { HELP } from "../studio/help_texts.js";
@@ -241,10 +242,48 @@ async function refreshLive() {
     if (isOwner && !adminBox.dataset.ready) { const panel = adminPanel({ ...d }); adminBox.replaceChildren(el("h2", { text: "Manage this model" }), panel); adminBox.dataset.ready = "1"; panel.open = true; }
   } catch (e) { $("#mp-market-body").replaceChildren(el("p", { class: "small muted", text: `Could not read this model from GenesisL1 (${errText(e)}).` })); }
 }
+// The Yes range: Yes when "from" <= probability <= "to" (defaults 0.50 and 1.00). A link can preset it with
+// ?threshold=0.6&threshold_max=0.85. Changing it re-decides the answer on screen without running the model again.
+let lastAnswer = null;
+const pctText = (v) => `${+(v * 100).toFixed(1)}%`;
+function readRange() {
+  try { return yesRange({ threshold: $("#mp-thr").value, thresholdMax: $("#mp-thr-max").value }); } catch { return null; }
+}
+function showRange() {
+  const r = readRange(), note = $("#mp-thr-note"), bad = !r;
+  $("#mp-thr").setAttribute("aria-invalid", String(bad)); $("#mp-thr-max").setAttribute("aria-invalid", String(bad));
+  note.classList.toggle("bad", bad);
+  note.textContent = bad ? "Use two numbers from 0 to 1, the first not above the second." : isDefaultRange(r) ? "The default: Yes at 50% or more."
+    : r.thresholdMax >= 1 ? `Yes at ${pctText(r.threshold)} or more.` : `Yes from ${pctText(r.threshold)} to ${pctText(r.thresholdMax)}.`;
+  $("#mp-thr-reset").hidden = bad ? false : isDefaultRange(r);
+  if (lastAnswer && r) renderAnswer(lastAnswer, r);
+  return r;
+}
+function renderAnswer(a, range) {
+  const { r, q, c, when } = a, d = decide(r.probability, range), yes = d.yes, pct = (r.probability * 100).toFixed(1), plain = isDefaultRange(d);
+  const lo = d.threshold * 100, hi = d.thresholdMax * 100;
+  const why = plain ? `${yes ? "50% or more" : "under 50%"}, so its answer is ${yes ? "yes" : "no"}.`
+    : d.thresholdMax >= 1 ? `${yes ? "at least" : "under"} your ${pctText(d.threshold)} threshold, so its answer is ${yes ? "yes" : "no"}.`
+    : `${yes ? "inside" : "outside"} your Yes range of ${pctText(d.threshold)} to ${pctText(d.thresholdMax)}, so its answer is ${yes ? "yes" : "no"}.`;
+  $("#mp-result").replaceChildren(el("div", { class: `mp-answer ${yes ? "yes" : "no"}` },
+    el("div", { class: "mp-answer-top" },
+      el("div", { class: "mp-verdict" }, el("span", { class: "mp-dot", "aria-hidden": "true" }), el("span", { text: yes ? "Yes" : "No" })),
+      el("div", { class: "mp-prob" }, el("b", { text: `${pct}%` }), el("span", { text: "probability" }))),
+    el("div", { class: "mp-meter", role: "img", "aria-label": `${pct}% on a scale where ${plain ? "50% and above" : d.thresholdMax >= 1 ? `${pctText(d.threshold)} and above` : `${pctText(d.threshold)} to ${pctText(d.thresholdMax)}`} means yes` },
+      el("span", { class: "mp-meter-band", style: `left: ${lo}%; width: ${Math.max(0, hi - lo)}%` }),
+      el("i", { style: `width: ${Math.max(1.5, Math.min(100, r.probability * 100))}%` }),
+      el("span", { class: "mp-meter-mid", style: `left: ${lo}%` }),
+      d.thresholdMax < 1 ? el("span", { class: "mp-meter-mid", style: `left: ${hi}%` }) : null),
+    el("div", { class: "mp-meter-scale", "aria-hidden": "true" }, el("span", { text: "0%" }), el("span", { text: plain ? "50%" : d.thresholdMax >= 1 ? `Yes from ${pctText(d.threshold)}` : `Yes ${pctText(d.threshold)}–${pctText(d.thresholdMax)}` }), el("span", { text: "100%" })),
+    el("p", { class: "mp-answer-text" }, q ? el("b", { text: `${q} ` }) : null, `The model gives it ${pct}%, ${why}`),
+    el("p", { class: "mp-answer-meta", text: `For the ${c} candle that closed ${when} UTC · answered on GenesisL1 (${r.via}, score ${r.scoreQ}) · educational, not investment advice` })));
+}
 async function runModel() {
   const btn = $("#mp-run-btn"), out = $("#mp-result");
   const wait = (text) => out.replaceChildren(el("p", { class: "mp-result-empty busy", text }));
-  showError($("#mp-error"), null); btn.disabled = true;
+  const range = showRange();
+  if (!range) { showError($("#mp-error"), "Set the Yes range first: two numbers from 0 to 1, the first not above the second."); return; }
+  showError($("#mp-error"), null); btn.disabled = true; lastAnswer = null;
   wait("Computing the inputs on the latest completed candle from public exchange data…");
   try {
     const gl1f = apiClient(SET), model = await gl1f.model(tokenId);
@@ -260,17 +299,10 @@ async function runModel() {
     }
     wait("Asking the model on GenesisL1…");
     const r = await gl1f.predict(model, inputs.valuesQ, opts);
-    const yes = r.probability >= 0.5, c = String(model.profile?.candle || "15m"), mins = parseInt(c, 10) * ({ m: 1, h: 60, d: 1440, w: 10080 }[c.slice(-1)] || 1);
+    const c = String(model.profile?.candle || "15m"), mins = parseInt(c, 10) * ({ m: 1, h: 60, d: 1440, w: 10080 }[c.slice(-1)] || 1);
     const when = new Date(Number(inputs.selectedOpenMs) + mins * 60_000).toISOString().slice(0, 16).replace("T", " ");
-    const pct = (r.probability * 100).toFixed(1), q = details?.profile ? questionText(details.profile) : "";
-    out.replaceChildren(el("div", { class: `mp-answer ${yes ? "yes" : "no"}` },
-      el("div", { class: "mp-answer-top" },
-        el("div", { class: "mp-verdict" }, el("span", { class: "mp-dot", "aria-hidden": "true" }), el("span", { text: yes ? "Yes" : "No" })),
-        el("div", { class: "mp-prob" }, el("b", { text: `${pct}%` }), el("span", { text: "probability" }))),
-      el("div", { class: "mp-meter", role: "img", "aria-label": `${pct}% on a scale where 50% and above means yes` }, el("i", { style: `width: ${Math.max(1.5, Math.min(100, r.probability * 100))}%` }), el("span", { class: "mp-meter-mid" })),
-      el("div", { class: "mp-meter-scale", "aria-hidden": "true" }, el("span", { text: "0%" }), el("span", { text: "50%" }), el("span", { text: "100%" })),
-      el("p", { class: "mp-answer-text" }, q ? el("b", { text: `${q} ` }) : null, `The model gives it ${pct}%, ${yes ? "50% or more" : "under 50%"}, so its answer is ${yes ? "yes" : "no"}.`),
-      el("p", { class: "mp-answer-meta", text: `For the ${c} candle that closed ${when} UTC · answered on GenesisL1 (${r.via}, score ${r.scoreQ}) · educational, not investment advice` })));
+    lastAnswer = { r, q: details?.profile ? questionText(details.profile) : "", c, when };
+    renderAnswer(lastAnswer, readRange() || range);
   } catch (e) { out.replaceChildren(el("p", { class: "mp-result-empty", text: "No answer this time: see the message above." })); showError($("#mp-error"), errText(e)); }
   finally { btn.disabled = false; }
 }
@@ -285,6 +317,13 @@ if (article && tokenId > 0) {
   const url = modelPage(tokenId, ROOT), title = $("#mp-title")?.textContent || `Crypto AI model #${tokenId}`;
   setShare(url, `${title}: a Crypto AI model on GenesisL1.`);
   $("#mp-run-btn").addEventListener("click", runModel);
+  {
+    const q = new URLSearchParams(location.search), set = (sel, v) => { if (v !== null && v !== "" && Number.isFinite(Number(v))) $(sel).value = Number(v).toFixed(2); };
+    set("#mp-thr", q.get("threshold")); set("#mp-thr-max", q.get("threshold_max"));
+    for (const sel of ["#mp-thr", "#mp-thr-max"]) $(sel).addEventListener("input", showRange);
+    $("#mp-thr-reset").addEventListener("click", () => { $("#mp-thr").value = "0.50"; $("#mp-thr-max").value = "1.00"; showRange(); });
+    showRange();
+  }
   $("#mp-studio").href = new URL(`${ROOT}app.html?model=${tokenId}#infer`, location.href).href;
   $("#mp-wallet")?.addEventListener("click", async () => { try { await connectWallet(); } catch (e) { showError($("#mp-error"), errText(e)); } await refreshWallet(); refreshLive(); });
   if (!LIVE || !globalThis.ethers || !setLive(SET)) {

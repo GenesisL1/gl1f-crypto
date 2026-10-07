@@ -270,7 +270,7 @@
 <div class="alert warn" id="bt-insample" hidden></div>
 </div>
 <div class="block"><h3 data-help="bt.rules"><span class="n">B</span> Trading rules</h3>
-<div class="fgrid"><div class="field"><label for="bt-threshold" data-help="bt.threshold">Entry threshold</label><input id="bt-threshold" type="number" min="0.01" max="0.99" step="0.01" value="0.5" /></div><div class="field"><label for="bt-fee" data-help="bt.fee">Fee per side %</label><input id="bt-fee" type="number" min="0" max="5" step="0.01" value="0.05" /></div><div class="field"><label for="bt-slip" data-help="bt.slippage">Slippage · bps</label><input id="bt-slip" type="number" min="0" max="500" step="1" value="2" /></div><div class="field"><label for="bt-leverage" data-help="bt.leverage">Leverage</label><select id="bt-leverage"><option value="1" selected>1× (no leverage)</option><option value="2">2×</option><option value="3">3×</option><option value="5">5×</option><option value="10">10×</option><option value="20">20×</option><option value="25">25×</option><option value="50">50×</option><option value="100">100×</option></select><span class="hint" id="bt-liq-hint"></span></div><div class="field"><label for="bt-margin" data-help="bt.margin">Margin per trade %</label><input id="bt-margin" type="number" min="1" max="100" step="1" value="100" inputmode="numeric" /></div><div class="field"><label for="bt-mmr" data-help="bt.mmr">Maintenance margin %</label><input id="bt-mmr" type="number" min="0" max="20" step="0.1" value="0.5" inputmode="decimal" /></div></div>
+<div class="fgrid"><div class="field"><label for="bt-threshold" data-help="bt.threshold">Entry threshold</label><input id="bt-threshold" type="number" min="0.01" max="0.99" step="0.01" value="0.5" /></div><div class="field"><label for="bt-threshold-max" data-help="bt.thresholdMax">Upper P limit</label><input id="bt-threshold-max" type="number" min="0.01" max="1" step="0.01" value="1" inputmode="decimal" /></div><div class="field"><label for="bt-fee" data-help="bt.fee">Fee per side %</label><input id="bt-fee" type="number" min="0" max="5" step="0.01" value="0.05" /></div><div class="field"><label for="bt-slip" data-help="bt.slippage">Slippage · bps</label><input id="bt-slip" type="number" min="0" max="500" step="1" value="2" /></div><div class="field"><label for="bt-leverage" data-help="bt.leverage">Leverage ×</label><input id="bt-leverage" type="number" min="1" max="100" step="1" value="1" inputmode="numeric" /><span class="hint" id="bt-liq-hint"></span></div><div class="field"><label for="bt-margin" data-help="bt.margin">Margin per trade %</label><input id="bt-margin" type="number" min="1" max="100" step="1" value="100" inputmode="numeric" /></div><div class="field"><label for="bt-mmr" data-help="bt.mmr">Maintenance margin %</label><input id="bt-mmr" type="number" min="0" max="20" step="0.1" value="0.5" inputmode="decimal" /></div></div>
 <p class="formula" id="bt-rules"></p>
 </div>
 <div class="actions-bar"><span class="muted small" id="bt-plan">—</span><div class="row"><button class="btn" type="button" id="bt-cancel" hidden>Cancel</button><button class="btn primary" type="button" id="bt-run">Run backtest</button></div></div>
@@ -513,6 +513,10 @@
                   <label for="in-threshold" data-help="in.threshold">Signal threshold</label>
                   <input id="in-threshold" type="number" min="0" max="1" step="0.01" value="0.5" />
                 </div>
+                <div class="field">
+                  <label for="in-threshold-max" data-help="in.thresholdMax">Upper limit</label>
+                  <input id="in-threshold-max" type="number" min="0" max="1" step="0.01" value="1" />
+                </div>
               </div>
               <label class="check" id="in-verify-wrap" hidden><input type="checkbox" id="in-verify" checked /> Verify on GenesisL1 with <span class="mono">predictView</span></label>
               <div class="actions-bar">
@@ -539,7 +543,7 @@
                 <strong class="signal-value mono" id="in-probability">—</strong>
                 <span class="signal-decision" id="in-decision">—</span>
               </div>
-              <div class="prob-track" aria-hidden="true"><div class="prob-fill" id="in-prob-fill"></div><div class="prob-mark" id="in-prob-mark"></div></div>
+              <div class="prob-track" aria-hidden="true"><div class="prob-fill" id="in-prob-fill"></div><div class="prob-mark" id="in-prob-mark"></div><div class="prob-mark" id="in-prob-mark-max" hidden></div></div>
               <p class="muted small" id="in-signal-sub"></p>
             </div>
             <div class="stat-grid" id="in-stats"></div>

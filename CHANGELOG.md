@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.13.0 (2026-10-07)
+- **Your Yes threshold, everywhere.** A model's answer is yes when threshold <= P <= upper limit. The defaults, 0.5 and 1, keep today's answer (yes at 50% or more). One rule, in `src/studio/threshold.js`, serves the model page, the studio, the backtest, the Web3 API and the MCP server.
+- **Model page.** Ask the model has "Answer Yes when the probability is from … to …". The answer on screen follows the fields at once, without running the model again; the bar shades the Yes range; a link can carry it (`model.html?id=1&threshold=0.6&threshold_max=0.85`); Reset brings back 0.50 to 1.00.
+- **Studio inference.** An upper limit next to the signal threshold, with a second mark on the bar; the receipt records both.
+- **Web3 API.** `predict(model, valuesQ, { threshold, thresholdMax })` also returns `yes`, `answer` and the range used. The range is checked before the model runs, so a wallet that pays per run never pays for a wrong one. New `ask(model, { engine, threshold, thresholdMax, ... })`: inputs, run and answer for the latest candle in one call. `decide()`, `yesRange()`, `rangeText()` and `questionText()` are exported. Existing calls behave as before.
+- **Backtest: upper P limit and any leverage.** An upper P limit next to the entry threshold: a trade opens only when P is in the range, and the threshold table skips thresholds at or above it. Leverage is a number field, any whole number from 1× to 100× (it was a list of nine values). A wrong range or leverage gets a clear message.
+- **Backtest fix: any past period.** Backtests can cover any past period, including one before the model's training data. A backtest warmed its signals up from the model's training seed and moved the start after it, so a range before or just after that point ended with "The range ends before the model's features are warmed up". It now warms up like inference: on the 120 days (or 4,000 candles) before the range, or from the seed when that is later. The inputs are bit-identical to the exact replay from the seed (tests/backtest_window_check.mjs: 212 market signals). Training reports keep the exact replay from the seed. On Hyperliquid, which serves only its latest 5,000 candles, the start moves after the oldest one and says so.
+- **Cookies and Google Analytics fix.** The cookie prompt is hard to miss: centred over a dimmed page (a bottom sheet on phones), with a clear title and two buttons of the same size, Accept analytics and Decline. It appears at once and on every page until the visitor chooses. Nothing from Google loads before Accept. Browsers that send Global Privacy Control (Brave, DuckDuckGo, privacy extensions) were declined silently, so Google Analytics never ran for them; they are now asked like everyone else, and the prompt says the Site never sells or shares data. A decline is asked again after 6 months, an acceptance after 12. Cookie policy version 2 (7 October 2026) describes both.
+- **MCP server for AI agents** (`mcp/`, on Deno, read-only, no key). Live at `https://crypto.gl1f.com/mcp`, with four tools: `list_models`, `get_model`, `ask_model` (with optional `threshold` and `threshold_max`) and `trading_rules`.
+  - Every tool declares the shape of its result.
+  - Each model runs once per candle, shared by all callers, with each caller's own Yes range applied.
+  - Each client may send 120 requests a minute, and paid models are refused.
+  - It reads the deployed site's own contracts, engine and Web3 API, so its answers match the model pages.
+  - It is tested with the official MCP TypeScript client.
+- **Deployment.**
+  - `deploy/upgrade.sh` upgrades a live server in one command: a backup of the site folder nginx serves, the new files, the MCP service, nginx, and checks.
+  - `deploy/setup-mcp.sh` installs the `gl1f-mcp` service: pinned Deno checked against its SHA-256, its own user, read-only on the site.
+  - `deploy/setup-crypto-nginx.sh` serves `/mcp` when the service is installed, and keeps an existing staging redirect when run again.
+  - `DEPLOY.md` covers upgrade, checks and undo.
+- **Docs.** New sections on the Yes threshold and the MCP server, on the Docs and Web3 API pages and in llms.txt.
+
 ## 1.12.1 (2026-10-05)
 - This public repository leaves out the protocol admin page: the contracts are deployed with `npm run deploy:contracts` and run with `npm run owner:tx`.
 - Model page redesign. The question is the headline (the model's name and market sit above it), with a breadcrumb, the description and chips for access, license, signals and BUY. Everything shares one width and one grid: Ask the model and About this model on the left; Access and sale (price and Buy first) and Share in a sidebar that stays in view on wide screens. One details style everywhere.

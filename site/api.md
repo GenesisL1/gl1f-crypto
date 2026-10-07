@@ -2,17 +2,17 @@
 
 > Run any Crypto AI model on GenesisL1 from code.
 
-[Quick start](https://crypto.gl1f.com/api.html#quick-start)[Addresses](https://crypto.gl1f.com/api.html#addresses)[Access modes](https://crypto.gl1f.com/api.html#access)[Access keys and plans](https://crypto.gl1f.com/api.html#keys)[Inputs](https://crypto.gl1f.com/api.html#inputs) [Reference](https://crypto.gl1f.com/api.html#reference)[Errors](https://crypto.gl1f.com/api.html#errors)[Security](https://crypto.gl1f.com/api.html#security)[Example: a bot](https://crypto.gl1f.com/api.html#bot)[Docs](https://crypto.gl1f.com/docs.html)
+[Quick start](https://crypto.gl1f.com/api.html#quick-start)[Addresses](https://crypto.gl1f.com/api.html#addresses)[Access modes](https://crypto.gl1f.com/api.html#access)[Yes threshold](https://crypto.gl1f.com/api.html#threshold)[Access keys and plans](https://crypto.gl1f.com/api.html#keys)[Inputs](https://crypto.gl1f.com/api.html#inputs) [Reference](https://crypto.gl1f.com/api.html#reference)[Errors](https://crypto.gl1f.com/api.html#errors)[Security](https://crypto.gl1f.com/api.html#security)[Example: a bot](https://crypto.gl1f.com/api.html#bot)[MCP server](https://crypto.gl1f.com/api.html#mcp)[Docs](https://crypto.gl1f.com/docs.html)
 
 **Web3 API** / Quick start
 
 # Run any Crypto AI model from code.
 
-Every Crypto AI model on GenesisL1 can be called from your own code, in a browser or in Node 18+. The GL1F Crypto helper wraps the contracts: it reads a model, computes its inputs on the latest candle with the same market engine the studio runs, and returns the model's probability, computed on-chain. Free models need nothing; paid ones take an access key with a plan, the admin's signature or a fee per run.
+Every Crypto AI model on GenesisL1 can be called from your own code, in a browser, in Deno or in Node 18+. The GL1F Crypto helper wraps the contracts: it reads a model, computes its inputs on the latest candle with the same market engine the studio runs, and returns the model's probability, computed on-chain. Free models need nothing; paid ones take an access key with a plan, the admin's signature or a fee per run.
 
 [Download gl1f-crypto.js](https://crypto.gl1f.com/sdk/gl1f-crypto.js) [Download the market engine](https://crypto.gl1f.com/sdk/gl1f-engine.js) [Try it in the studio](https://crypto.gl1f.com/app.html#infer)
 
-// npm i ethers (and put gl1f-crypto.js next to your script) import * as ethers from "ethers"; import { GL1FCrypto } from "./gl1f-crypto.js"; const gl1f = new GL1FCrypto({ ethers, rpcUrl: "RPC_URL", chainId: CHAIN_ID, registry: "REGISTRY", runtime: "RUNTIME" }); const model = await gl1f.model(42); // any model's token ID const engine = await GL1FCrypto.nodeEngine(); // in a browser: await GL1FCrypto.browserEngine() const inputs = await gl1f.latestInputs(model, { engine }); // its inputs on the latest completed candle const out = await gl1f.predict(model, inputs.valuesQ); // free model: a free read, no key, no gas console.log(model.title, "P =", out.probability.toFixed(4), "via", out.via);
+// npm i ethers (and put gl1f-crypto.js next to your script) import * as ethers from "ethers"; import { GL1FCrypto } from "./gl1f-crypto.js"; const gl1f = new GL1FCrypto({ ethers, rpcUrl: "RPC_URL", chainId: CHAIN_ID, registry: "REGISTRY", runtime: "RUNTIME" }); const model = await gl1f.model(42); // any model's token ID const engine = await GL1FCrypto.nodeEngine(); // in a browser: await GL1FCrypto.browserEngine() const inputs = await gl1f.latestInputs(model, { engine }); // its inputs on the latest completed candle const out = await gl1f.predict(model, inputs.valuesQ); // free model: a free read, no key, no gas console.log(model.title, "P =", out.probability.toFixed(4), out.answer, "via", out.via); // yes at 0.5 or more // your own rule: predict(model, inputs.valuesQ, { threshold: 0.6 }) · all in one call: gl1f.ask(model, { engine, threshold: 0.6 })
 
 The Inference step of the studio shows this code ready for the model you open, with its plans and a button that creates an access key.
 
@@ -55,6 +55,16 @@ Read from this site's runtime configuration. The registry knows every model, its
 
 The result is `{ probability, scoreQ, via }`: the probability that the model's question resolves yes, its integer score and the call that produced it. The score is the same integer the studio computes, so anyone can check it.
 
+**Web3 API** / Yes threshold
+
+## Yes or no, by your threshold.
+
+The answer is **yes** when `threshold <= probability <= thresholdMax`. Both are optional, from 0 to 1, with defaults 0.5 and 1: without them, yes at 50% or more, as before. They are checked before the model runs, so a wallet that pays per run never pays for a call with a wrong range.
+
+const out = await gl1f.predict(model, inputs.valuesQ, { threshold: 0.6 }); // out.yes, out.answer: yes at 0.6 or more const now = await gl1f.ask(model, { engine, threshold: 0.6, thresholdMax: 0.85 }); // inputs, run and answer in one call import { decide } from "./gl1f-crypto.js"; decide(0.72, { threshold: 0.6, thresholdMax: 0.85 }); // { yes: true, answer: "yes", threshold: 0.6, thresholdMax: 0.85 }
+
+The model page, the studio, the backtest and the MCP server use the same rule. Model page links can carry it: `model.html?id=1&threshold=0.6&threshold_max=0.85`.
+
 **03** / Access keys and plans
 
 ## A key for your bot, a plan for the key.
@@ -82,11 +92,13 @@ const engine = await GL1FCrypto.nodeEngine("./gl1f-engine.js"); // a local copy,
 | `new GL1FCrypto({ ethers, rpcUrl, chainId, registry, runtime, nft?, provider? })` | A client. Pass the ethers v6 module; `provider` replaces `rpcUrl`. |
 | `model(tokenId)` | `{ tokenId, modelId, title, description, pricing, feeWei, inferenceEnabled, scaleQ, nFeatures, featureNames, profile, report, plans }` |
 | `latestInputs(model, { engine, asOfMs? })` | `{ valuesQ, values, features, selectedOpenMs, … }` |
-| `predict(model, valuesQ, { accessKey \| owner \| payer, deadlineSec? })` | `{ probability, scoreQ, via, tx? }` |
+| `predict(model, valuesQ, { accessKey \| owner \| payer, deadlineSec?, threshold?, thresholdMax? })` | `{ probability, yes, answer, threshold, thresholdMax, scoreQ, via, tx? }` |
+| `ask(model, { engine, asOfMs?, threshold?, thresholdMax?, accessKey \| owner \| payer })` | The latest answer in one call: `{ model, question, market, candle, candleOpen, candleClose, probability, yes, answer, … }` |
 | `newAccessKey()` | `{ address, privateKey }` |
 | `buyAccess(model, planId, keyAddress, signer)` | `{ tx, untilBlock, block, active }` |
 | `accessStatus(model, keyAddress)` | `{ untilBlock, block, active }` |
 | `GL1FCrypto.browserEngine(url?)` · `GL1FCrypto.nodeEngine(source?)` | The market engine: `{ infer(job), close() }` |
+| `decide(probability, { threshold?, thresholdMax? })` · `yesRange(…)` | `{ yes, answer, threshold, thresholdMax }` · the range, checked (defaults 0.5 and 1) |
 | `packInputs(valuesQ)` · `quantize(values, scaleQ)` | The bytes the runtime reads (little-endian int32) · integers from signal values |
 
 **06** / Errors
@@ -113,4 +125,19 @@ Keep an access key's private key like a password: anyone who has it can use its 
 
 ## A bot that asks every candle.
 
-import * as ethers from "ethers"; import { GL1FCrypto } from "./gl1f-crypto.js"; const gl1f = new GL1FCrypto({ ethers, rpcUrl: "RPC_URL", chainId: CHAIN_ID, registry: "REGISTRY", runtime: "RUNTIME" }); const model = await gl1f.model(Number(process.env.GL1F_MODEL)); const engine = await GL1FCrypto.nodeEngine(); async function tick() { const inputs = await gl1f.latestInputs(model, { engine }); const out = await gl1f.predict(model, inputs.valuesQ, process.env.GL1F_ACCESS_KEY ? { accessKey: process.env.GL1F_ACCESS_KEY } : {}); console.log(new Date(inputs.selectedOpenMs).toISOString(), model.title, out.probability.toFixed(4)); } await tick(); setInterval(tick, 15 * 60 * 1000); // match the model's candle
+import * as ethers from "ethers"; import { GL1FCrypto } from "./gl1f-crypto.js"; const gl1f = new GL1FCrypto({ ethers, rpcUrl: "RPC_URL", chainId: CHAIN_ID, registry: "REGISTRY", runtime: "RUNTIME" }); const model = await gl1f.model(Number(process.env.GL1F_MODEL)); const engine = await GL1FCrypto.nodeEngine(); async function tick() { const out = await gl1f.ask(model, { engine, threshold: Number(process.env.GL1F_THRESHOLD || 0.5), ...(process.env.GL1F_ACCESS_KEY ? { accessKey: process.env.GL1F_ACCESS_KEY } : {}) }); console.log(out.candleClose, model.title, out.probability.toFixed(4), out.answer); } await tick(); setInterval(tick, 15 * 60 * 1000); // match the model's candle
+
+**Web3 API** / MCP server
+
+## For AI agents: the MCP server.
+
+AI assistants and agents can use the models without code through the Model Context Protocol. Address: `https://crypto.gl1f.com/mcp` (Streamable HTTP, no key). Claude: add a custom connector with the address. ChatGPT: in developer mode, add a connector with the address and no authentication. Claude Code: `claude mcp add --transport http gl1f-crypto https://crypto.gl1f.com/mcp`.
+
+| Tool | Arguments | Returns |
+|---|---|---|
+| `list_models` | `limit?`, `before?` | `{ total, models: [{ id, title, question, market, access, url, … }], more }` |
+| `get_model` | `model` (number or link) | The model's details and `tradingRules` |
+| `ask_model` | `model`, `threshold?`, `threshold_max?` | `{ answer, yes, probability, threshold, thresholdMax, rule, candleClose, url, … }` |
+| `trading_rules` | `model`, `threshold?`, `threshold_max?` | `{ direction, signal, entry, targetPct, stopPct, horizonCandles, summary, … }` |
+
+Every tool is read-only and declares the shape of its result. Free and tip models only; one run per model per candle, shared by all callers; 120 requests a minute per client. Run your own from the repository's `mcp/` folder (Deno): `deno task stdio` for a local agent, or `deploy/setup-mcp.sh` on a server.

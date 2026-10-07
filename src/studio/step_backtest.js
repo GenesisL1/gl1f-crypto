@@ -1,8 +1,10 @@
 // MIT License — Copyright (c) 2026 Decentralized Science Labs
-// Step 3 — Backtest. The worker replays the model's exact features over a range (same engine and
-// seed as the dataset); the page scores every candle with the same integer trees and simulates the
+// Step 3 — Backtest. The worker replays the model's exact features over a range (same engine as the dataset,
+// warmed up on the 120 days before the range, or from the training seed when that is later, so any past period can be
+// tested); the page scores every candle with the same integer trees and simulates the
 // trades the label describes: enter at the next open, exit at target, stop or horizon close.
 // Educational simulation only.
+import { rangeText } from "./threshold.js";
 import { $, fmtInt, fmtPct, fmtPrice, fmtUtc, renderStats, setPill, setProgress, showError, segmented, downloadText, csvCell, table } from "./ui.js";
 import { predictQ } from "./local_infer.js";
 import { INTERVAL_MIN, marketLabel, targetLabel } from "./profile.js";
@@ -13,21 +15,23 @@ const FEE_DEFAULT = { binance: 0.05, coinbase: 0.4, hyperliquid: 0.045 };
 const SWEEP = [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8];
 
 // Pure trade simulation over replayed candles `bt` and per-candle probabilities `prob`.
-export function simulate(bt, prob, { threshold, feePct, slipBps, direction, movePct, retracePct, horizonBars, leverage = 1, marginPct = 100, mmrPct = 0.5 }) {
+// A signal is a candle whose probability is from the entry threshold up to the upper limit (thresholdMax, 1 = none).
+export function simulate(bt, prob, { threshold, thresholdMax = 1, feePct, slipBps, direction, movePct, retracePct, horizonBars, leverage = 1, marginPct = 100, mmrPct = 0.5 }) {
   const n = bt.nRows, up = direction !== "down", H = Math.max(1, Math.floor(horizonBars));
   const fee = Math.max(0, feePct) / 100, slip = Math.max(0, slipBps) / 10_000, m = movePct / 100, r = retracePct / 100;
-  const L = Math.min(125, Math.max(1, Number(leverage) || 1)), alloc = Math.min(1, Math.max(0.01, (Number(marginPct) || 100) / 100));
+  const L = Math.min(100, Math.max(1, Math.round(Number(leverage) || 1))), alloc = Math.min(1, Math.max(0.01, (Number(marginPct) || 100) / 100));
   const mmr = Math.min(0.2, Math.max(0, Number(mmrPct) || 0) / 100);
   // Adverse move, as a fraction of the entry price, that wipes out the margin (isolated margin, linear contract).
   const liqDist = L > 1 ? Math.max(0.0005, 1 / L - mmr) : Infinity;
   const synthetic = bt.synthetic || null;
   const trades = [], equity = new Float64Array(n);
   let eq = 1, held = 0, signals = 0, i = 0, skipTarget = 0, skipStop = 0, skipUntradable = 0, liquidations = 0, bankrupt = false;
-  for (let k = 0; k < n; k++) if (prob[k] >= threshold) signals++;
+  const hiP = Number.isFinite(Number(thresholdMax)) ? Number(thresholdMax) : 1, fires = (q) => q >= threshold && q <= hiP;
+  for (let k = 0; k < n; k++) if (fires(prob[k])) signals++;
   while (i < n) {
     equity[i] = eq;
     const p = prob[i], base = bt.baseline[i];
-    if (bankrupt || !(p >= threshold) || !Number.isFinite(base)) { i++; continue; }
+    if (bankrupt || !fires(p) || !Number.isFinite(base)) { i++; continue; }
     // No look-ahead: the signal exists only after candle i has closed, so the earliest price anyone could trade
     // is the open of candle i + 1. That candle must exist and must have traded (gap-filled buckets had no trades).
     const j = i + 1;
@@ -96,7 +100,7 @@ export function initBacktest(ctx) {
   const ui = {
     pill: $("#bt-pill"), empty: $("#bt-empty"), ready: $("#bt-ready"), title: $("#bt-model-title"), sub: $("#bt-model-sub"),
     start: $("#bt-start"), end: $("#bt-end"), market: $("#bt-market"), marketHint: $("#bt-market-hint"), insample: $("#bt-insample"),
-    threshold: $("#bt-threshold"), fee: $("#bt-fee"), slip: $("#bt-slip"), rules: $("#bt-rules"), plan: $("#bt-plan"),
+    threshold: $("#bt-threshold"), thresholdMax: $("#bt-threshold-max"), fee: $("#bt-fee"), slip: $("#bt-slip"), rules: $("#bt-rules"), plan: $("#bt-plan"),
     leverage: $("#bt-leverage"), margin: $("#bt-margin"), mmr: $("#bt-mmr"), liqHint: $("#bt-liq-hint"),
     run: $("#bt-run"), cancel: $("#bt-cancel"), box: $("#bt-run-box"), stage: $("#bt-stage"), pct: $("#bt-pct"), bar: $("#bt-bar"),
     progress: $("#bt-progress"), message: $("#bt-message"), error: $("#bt-error"), result: $("#bt-result"), period: $("#bt-period"),
@@ -179,9 +183,9 @@ export function initBacktest(ctx) {
   function renderRules() {
     const m = model(), p = profile(m);
     if (!p?.label) { ui.rules.textContent = ""; return; }
-    const L = p.label, up = L.direction !== "down", thr = Number(ui.threshold.value);
-    const lev = leverageOpts(p);
-    ui.rules.textContent = `${up ? "Long" : "Short"} ${lev.leverage}× when P ≥ ${Number.isFinite(thr) ? thr.toFixed(2) : "?"} at a candle close → enter at the next candle's open, only if that candle traded and its open is still between stop and target · target ${up ? "+" : "−"}${L.movePct}% / stop ${up ? "−" : "+"}${L.retracePct}% from EMA${L.basePeriod} · exit at target, stop${lev.leverage > 1 ? ", liquidation" : ""} or the close of candle ${L.horizonBars} · stop first when both are touched in one candle · one position at a time.`;
+    const L = p.label, up = L.direction !== "down", thr = Number(ui.threshold.value), thrMax = Number(ui.thresholdMax.value);
+    const lev = leverageOpts(p), when = thr > 0 && thr < 1 && thrMax > thr && thrMax <= 1 ? rangeText({ threshold: thr, thresholdMax: thrMax }) : "P in a valid range";
+    ui.rules.textContent = `${up ? "Long" : "Short"} ${lev.leverage}× when ${when} at a candle close → enter at the next candle's open, only if that candle traded and its open is still between stop and target · target ${up ? "+" : "−"}${L.movePct}% / stop ${up ? "−" : "+"}${L.retracePct}% from EMA${L.basePeriod} · exit at target, stop${lev.leverage > 1 ? ", liquidation" : ""} or the close of candle ${L.horizonBars} · stop first when both are touched in one candle · one position at a time.`;
     const liqPct = lev.leverage > 1 ? Math.max(0.05, 100 / lev.leverage - lev.mmrPct) : null;
     ui.liqHint.textContent = p.exchange === "coinbase" ? "Spot market: no leverage." : liqPct === null ? "No leverage: no liquidation." :
       `${lev.leverage}×: liquidation ≈ ${liqPct.toFixed(2)}% against the entry.${liqPct <= L.retracePct ? ` That is inside your ${L.retracePct}% stop, so liquidation comes first.` : ` Your ${L.retracePct}% stop triggers first.`}`;
@@ -194,7 +198,7 @@ export function initBacktest(ctx) {
     const spot = p?.exchange === "coinbase";
     ui.leverage.disabled = spot;
     if (spot) ui.leverage.value = "1";
-    return { leverage: spot ? 1 : Math.min(125, Math.max(1, Number(ui.leverage.value) || 1)), marginPct: Math.min(100, Math.max(1, Number(ui.margin.value) || 100)), mmrPct: Math.min(20, Math.max(0, Number(ui.mmr.value) || 0)) };
+    return { leverage: spot ? 1 : Math.min(100, Math.max(1, Math.round(Number(ui.leverage.value) || 1))), marginPct: Math.min(100, Math.max(1, Number(ui.margin.value) || 100)), mmrPct: Math.min(20, Math.max(0, Number(ui.mmr.value) || 0)) };
   }
 
   function setBusy(on) {
@@ -208,8 +212,11 @@ export function initBacktest(ctx) {
     if (market.busy) { showError(ui.error, "Wait for the running job to finish."); return; }
     const { startMs, endMs } = rangeMs();
     if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) { showError(ui.error, "End must be after start."); return; }
-    const threshold = Number(ui.threshold.value), feePct = Number(ui.fee.value), slipBps = Number(ui.slip.value);
+    const threshold = Number(ui.threshold.value), thresholdMax = Number(ui.thresholdMax.value), feePct = Number(ui.fee.value), slipBps = Number(ui.slip.value);
     if (!(threshold > 0 && threshold < 1)) { showError(ui.error, "Threshold must be between 0 and 1."); return; }
+    if (!(thresholdMax > threshold && thresholdMax <= 1)) { showError(ui.error, "The upper P limit must be above the entry threshold and at most 1 (1 = no upper limit)."); return; }
+    const levIn = Number(ui.leverage.value);
+    if (p.exchange !== "coinbase" && !(Number.isInteger(levIn) && levIn >= 1 && levIn <= 100)) { showError(ui.error, "Leverage must be a whole number from 1 to 100."); return; }
     if (!(feePct >= 0 && feePct <= 5) || !(slipBps >= 0 && slipBps <= 500)) { showError(ui.error, "Check the fee and slippage values."); return; }
     const symbolInput = ui.market.value.trim() || p.symbol, sameMarket = !symbolInput || symbolInput.toUpperCase() === String(p.symbol || "").toUpperCase();
     const job = {
@@ -242,9 +249,9 @@ export function initBacktest(ctx) {
           await new Promise((res) => setTimeout(res, 0));
         }
       }
-      const opts = { threshold, feePct, slipBps, ...p.label, ...leverageOpts(p) };
+      const opts = { threshold, thresholdMax, feePct, slipBps, ...p.label, ...leverageOpts(p) };
       const sim = simulate(bt, prob, opts);
-      const sweep = SWEEP.map((t) => ({ t, ...simulate(bt, prob, { ...opts, threshold: t }).stats }));
+      const sweep = SWEEP.filter((t) => t < thresholdMax).map((t) => ({ t, ...simulate(bt, prob, { ...opts, threshold: t }).stats }));
       last = { model: m, bt, prob, sim, sweep, opts, symbol: bt.symbol, job };
       render(last);
       setPill(ui.pill, "Results ready", "ok");
@@ -338,7 +345,7 @@ export function initBacktest(ctx) {
   });
   ui.run.addEventListener("click", run);
   ui.cancel.addEventListener("click", () => market.cancel());
-  for (const input of [ui.threshold, ui.slip, ui.start, ui.end]) input.addEventListener("input", () => { checkInSample(); renderRules(); });
+  for (const input of [ui.threshold, ui.thresholdMax, ui.slip, ui.start, ui.end]) input.addEventListener("input", () => { checkInSample(); renderRules(); });
   ui.fee.addEventListener("input", () => { feeTouched = true; renderRules(); });
   for (const node of [ui.leverage, ui.margin, ui.mmr]) node.addEventListener("input", renderRules);
 

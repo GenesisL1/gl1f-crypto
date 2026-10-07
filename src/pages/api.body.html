@@ -1,13 +1,13 @@
 <div class="docs-layout">
 <nav class="toc" aria-label="On this page">
-      <a href="#quick-start">Quick start</a><a href="#addresses">Addresses</a><a href="#access">Access modes</a><a href="#keys">Access keys and plans</a><a href="#inputs">Inputs</a>
-      <a href="#reference">Reference</a><a href="#errors">Errors</a><a href="#security">Security</a><a href="#bot">Example: a bot</a><a href="./docs.html">Docs</a>
+      <a href="#quick-start">Quick start</a><a href="#addresses">Addresses</a><a href="#access">Access modes</a><a href="#threshold">Yes threshold</a><a href="#keys">Access keys and plans</a><a href="#inputs">Inputs</a>
+      <a href="#reference">Reference</a><a href="#errors">Errors</a><a href="#security">Security</a><a href="#bot">Example: a bot</a><a href="#mcp">MCP server</a><a href="./docs.html">Docs</a>
     </nav>
 <div class="docs">
       <section id="quick-start">
         <div class="eyebrow"><b>Web3 API</b> / Quick start</div>
         <h1 style="font-size:clamp(2rem,4vw,3.2rem)">Run any Crypto AI model <span class="serif">from code.</span></h1>
-        <p>Every Crypto AI model on GenesisL1 can be called from your own code, in a browser or in Node 18+. The GL1F Crypto helper wraps the contracts: it reads a model, computes its inputs on the latest candle with the same market engine the studio runs, and returns the model's probability, computed on-chain. Free models need nothing; paid ones take an access key with a plan, the admin's signature or a fee per run.</p>
+        <p>Every Crypto AI model on GenesisL1 can be called from your own code, in a browser, in Deno or in Node 18+. The GL1F Crypto helper wraps the contracts: it reads a model, computes its inputs on the latest candle with the same market engine the studio runs, and returns the model's probability, computed on-chain. Free models need nothing; paid ones take an access key with a plan, the admin's signature or a fee per run.</p>
         <p><a class="btn primary small" href="./sdk/gl1f-crypto.js" download>Download gl1f-crypto.js</a> <a class="btn small" href="./sdk/gl1f-engine.js" download>Download the market engine</a> <a class="btn small" href="./app.html#infer">Try it in the studio</a></p>
         <pre class="code" id="api-quick">// npm i ethers   (and put gl1f-crypto.js next to your script)
 import * as ethers from "ethers";
@@ -18,7 +18,8 @@ const model = await gl1f.model(42);                            // any model's to
 const engine = await GL1FCrypto.nodeEngine();                  // in a browser: await GL1FCrypto.browserEngine()
 const inputs = await gl1f.latestInputs(model, { engine });     // its inputs on the latest completed candle
 const out = await gl1f.predict(model, inputs.valuesQ);         // free model: a free read, no key, no gas
-console.log(model.title, "P =", out.probability.toFixed(4), "via", out.via);</pre>
+console.log(model.title, "P =", out.probability.toFixed(4), out.answer, "via", out.via);   // yes at 0.5 or more
+// your own rule: predict(model, inputs.valuesQ, { threshold: 0.6 }) · all in one call: gl1f.ask(model, { engine, threshold: 0.6 })</pre>
         <p class="muted small">The Inference step of the studio shows this code ready for the model you open, with its plans and a button that creates an access key.</p>
       </section>
 
@@ -48,6 +49,16 @@ console.log(model.title, "P =", out.probability.toFixed(4), "via", out.via);</pr
         <p>The result is <code>{ probability, scoreQ, via }</code>: the probability that the model's question resolves yes, its integer score and the call that produced it. The score is the same integer the studio computes, so anyone can check it.</p>
       </section>
 
+      <section id="threshold">
+        <div class="eyebrow"><b>Web3 API</b> / Yes threshold</div>
+        <h2>Yes or no, <span class="serif">by your threshold.</span></h2>
+        <p>The answer is <b>yes</b> when <code>threshold &lt;= probability &lt;= thresholdMax</code>. Both are optional, from 0 to 1, with defaults 0.5 and 1: without them, yes at 50% or more, as before. They are checked before the model runs, so a wallet that pays per run never pays for a call with a wrong range.</p>
+        <pre class="code">const out = await gl1f.predict(model, inputs.valuesQ, { threshold: 0.6 });          // out.yes, out.answer: yes at 0.6 or more
+const now = await gl1f.ask(model, { engine, threshold: 0.6, thresholdMax: 0.85 });   // inputs, run and answer in one call
+import { decide } from "./gl1f-crypto.js";
+decide(0.72, { threshold: 0.6, thresholdMax: 0.85 });   // { yes: true, answer: "yes", threshold: 0.6, thresholdMax: 0.85 }</pre>
+        <p>The model page, the studio, the backtest and the MCP server use the same rule. Model page links can carry it: <code>model.html?id=1&amp;threshold=0.6&amp;threshold_max=0.85</code>.</p>
+      </section>
       <section id="keys">
         <div class="eyebrow"><b>03</b> / Access keys and plans</div>
         <h2>A key for your bot, <span class="serif">a plan for the key.</span></h2>
@@ -79,11 +90,13 @@ console.log(now.valuesQ.length === model.nFeatures, now.selectedOpenMs);</pre>
           <tr><td><code>new GL1FCrypto({ ethers, rpcUrl, chainId, registry, runtime, nft?, provider? })</code></td><td>A client. Pass the ethers v6 module; <code>provider</code> replaces <code>rpcUrl</code>.</td></tr>
           <tr><td><code>model(tokenId)</code></td><td><code>{ tokenId, modelId, title, description, pricing, feeWei, inferenceEnabled, scaleQ, nFeatures, featureNames, profile, report, plans }</code></td></tr>
           <tr><td><code>latestInputs(model, { engine, asOfMs? })</code></td><td><code>{ valuesQ, values, features, selectedOpenMs, … }</code></td></tr>
-          <tr><td><code>predict(model, valuesQ, { accessKey | owner | payer, deadlineSec? })</code></td><td><code>{ probability, scoreQ, via, tx? }</code></td></tr>
+          <tr><td><code>predict(model, valuesQ, { accessKey | owner | payer, deadlineSec?, threshold?, thresholdMax? })</code></td><td><code>{ probability, yes, answer, threshold, thresholdMax, scoreQ, via, tx? }</code></td></tr>
+          <tr><td><code>ask(model, { engine, asOfMs?, threshold?, thresholdMax?, accessKey | owner | payer })</code></td><td>The latest answer in one call: <code>{ model, question, market, candle, candleOpen, candleClose, probability, yes, answer, … }</code></td></tr>
           <tr><td><code>newAccessKey()</code></td><td><code>{ address, privateKey }</code></td></tr>
           <tr><td><code>buyAccess(model, planId, keyAddress, signer)</code></td><td><code>{ tx, untilBlock, block, active }</code></td></tr>
           <tr><td><code>accessStatus(model, keyAddress)</code></td><td><code>{ untilBlock, block, active }</code></td></tr>
           <tr><td><code>GL1FCrypto.browserEngine(url?)</code> · <code>GL1FCrypto.nodeEngine(source?)</code></td><td>The market engine: <code>{ infer(job), close() }</code></td></tr>
+          <tr><td><code>decide(probability, { threshold?, thresholdMax? })</code> · <code>yesRange(…)</code></td><td><code>{ yes, answer, threshold, thresholdMax }</code> · the range, checked (defaults 0.5 and 1)</td></tr>
           <tr><td><code>packInputs(valuesQ)</code> · <code>quantize(values, scaleQ)</code></td><td>The bytes the runtime reads (little-endian int32) · integers from signal values</td></tr>
         </table></div>
       </section>
@@ -119,12 +132,25 @@ const gl1f = new GL1FCrypto({ ethers, rpcUrl: "RPC_URL", chainId: CHAIN_ID, regi
 const model = await gl1f.model(Number(process.env.GL1F_MODEL));
 const engine = await GL1FCrypto.nodeEngine();
 async function tick() {
-  const inputs = await gl1f.latestInputs(model, { engine });
-  const out = await gl1f.predict(model, inputs.valuesQ, process.env.GL1F_ACCESS_KEY ? { accessKey: process.env.GL1F_ACCESS_KEY } : {});
-  console.log(new Date(inputs.selectedOpenMs).toISOString(), model.title, out.probability.toFixed(4));
+  const out = await gl1f.ask(model, { engine, threshold: Number(process.env.GL1F_THRESHOLD || 0.5),
+    ...(process.env.GL1F_ACCESS_KEY ? { accessKey: process.env.GL1F_ACCESS_KEY } : {}) });
+  console.log(out.candleClose, model.title, out.probability.toFixed(4), out.answer);
 }
 await tick();
 setInterval(tick, 15 * 60 * 1000);   // match the model's candle</pre>
+      </section>
+      <section id="mcp">
+        <div class="eyebrow"><b>Web3 API</b> / MCP server</div>
+        <h2>For AI agents: <span class="serif">the MCP server.</span></h2>
+        <p>AI assistants and agents can use the models without code through the Model Context Protocol. Address: <code>https://crypto.gl1f.com/mcp</code> (Streamable HTTP, no key). Claude: add a custom connector with the address. ChatGPT: in developer mode, add a connector with the address and no authentication. Claude Code: <code>claude mcp add --transport http gl1f-crypto https://crypto.gl1f.com/mcp</code>.</p>
+        <div class="table-scroll"><table class="tbl">
+          <tr><th>Tool</th><th>Arguments</th><th>Returns</th></tr>
+          <tr><td><code>list_models</code></td><td><code>limit?</code>, <code>before?</code></td><td><code>{ total, models: [{ id, title, question, market, access, url, … }], more }</code></td></tr>
+          <tr><td><code>get_model</code></td><td><code>model</code> (number or link)</td><td>The model's details and <code>tradingRules</code></td></tr>
+          <tr><td><code>ask_model</code></td><td><code>model</code>, <code>threshold?</code>, <code>threshold_max?</code></td><td><code>{ answer, yes, probability, threshold, thresholdMax, rule, candleClose, url, … }</code></td></tr>
+          <tr><td><code>trading_rules</code></td><td><code>model</code>, <code>threshold?</code>, <code>threshold_max?</code></td><td><code>{ direction, signal, entry, targetPct, stopPct, horizonCandles, summary, … }</code></td></tr>
+        </table></div>
+        <p>Every tool is read-only and declares the shape of its result. Free and tip models only; one run per model per candle, shared by all callers; 120 requests a minute per client. Run your own from the repository's <code>mcp/</code> folder (Deno): <code>deno task stdio</code> for a local agent, or <code>deploy/setup-mcp.sh</code> on a server.</p>
       </section>
 </div>
 </div>

@@ -2094,10 +2094,33 @@ async function runBacktest(rawJob) {
   const hasSeed = job.featureSeedStartMs !== null && job.featureSeedStartMs !== undefined && job.featureSeedStartMs !== "";
   const seed = hasSeed ? Number(job.featureSeedStartMs) : NaN;
   if (hasSeed && (!finite(seed) || seed < 0 || seed % candleMs !== 0)) throw new Error("The model's feature seed is not a candle boundary");
-  let moved = false;
-  if (hasSeed && seed + warmupBars * candleMs > startMs) { startMs = seed + warmupBars * candleMs; moved = true; }
-  if (endMs - startMs < 2 * candleMs) throw new Error("The range ends before the model's features are warmed up. Choose a later range.");
-  const fetchStart = hasSeed ? seed : Math.max(0, startMs - warmupBars * candleMs);
+  // Where the replay starts. Like inference, a backtest warms the features up on the 120 days (or 4,000 candles) before its
+  // range, or from the model's training seed when that is later: the inputs are the same bit for bit
+  // (tests/replay_window_check.mjs, tests/backtest_window_check.mjs). So a range may lie before the training data too.
+  // A training report asks for the exact replay from the seed (exactSeedReplay), as the dataset was built.
+  const REPLAY_MS = Math.max(120 * 24 * HOUR_MS, 4000 * candleMs, warmupBars * candleMs);
+  const bounded = Math.max(0, Math.floor((startMs - REPLAY_MS) / candleMs) * candleMs);
+  let moved = false, fetchStart, warmupSource;
+  if (hasSeed && rawJob.exactSeedReplay === true) {
+    if (seed + warmupBars * candleMs > startMs) { startMs = seed + warmupBars * candleMs; moved = true; }
+    fetchStart = seed; warmupSource = "profile seed";
+  } else if (hasSeed && seed + warmupBars * candleMs <= startMs) {
+    fetchStart = Math.max(seed, bounded); warmupSource = fetchStart === seed ? "profile seed" : "converged window";
+  } else if (hasSeed) {
+    fetchStart = bounded; warmupSource = "converged window";
+  } else {
+    fetchStart = Math.max(0, startMs - warmupBars * candleMs); warmupSource = "minimum warm-up";
+  }
+  if (ex.historyRows) {   // Hyperliquid serves only its latest candles: warm up from the oldest one it has
+    const earliest = Math.floor(now / candleMs) * candleMs - (ex.historyRows - 3) * candleMs;
+    if (fetchStart < earliest) {
+      fetchStart = earliest; warmupSource = "exchange history";
+      if (startMs < earliest + warmupBars * candleMs) { startMs = earliest + warmupBars * candleMs; moved = true; }
+    }
+  }
+  if (endMs - startMs < 2 * candleMs) throw new Error(ex.historyRows && warmupSource === "exchange history"
+    ? `${ex.name} only serves its latest ${ex.historyRows.toLocaleString("en-US")} ${candle} candles, so this range cannot be warmed up. Choose a later range.`
+    : "The range ends before the model's features are warmed up. Choose a later range.");
   const totalRows = Math.ceil((endMs - fetchStart) / candleMs), rangeRows = Math.ceil((endMs - startMs) / candleMs);
   const workingWidth = (job.buildLegacy ? 120 : 0) + (job.buildOptimal ? 55 : 0);
   if (rangeRows > 200_000 || totalRows * job.features.length > 55_000_000 || totalRows * workingWidth > 70_000_000) throw new Error("This range is too large for the browser. Shorten it or use a larger candle.");
@@ -2142,7 +2165,7 @@ async function runBacktest(rawJob) {
   progress(1, "ready", `${n.toLocaleString()} candles ready`);
   return {
     exchange: ex.id, venue: ex.venue, exchangeName: ex.name, symbol: market.symbol, candle, nRows: n, nFeatures: F, features: job.features,
-    startMs: native.time[first], endMs, fetchStartMs: fetchStart, serverTimeMs: now, warmupSource: hasSeed ? "profile seed" : "minimum warm-up",
+    startMs: native.time[first], endMs, fetchStartMs: fetchStart, serverTimeMs: now, warmupSource,
     times: slice(native.time), open: slice(native.open), high: slice(native.high), low: slice(native.low), close: slice(native.close),
     baseline, synthetic: Uint8Array.from(native.synthetic.subarray(first)), X, valid, y, skipped, startMoved: moved,
   };

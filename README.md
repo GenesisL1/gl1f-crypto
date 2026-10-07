@@ -21,6 +21,8 @@ src/
 contracts/                 Solidity: CryptoModelRegistry, CryptoModelMarketplace (burnable fees) + ModelStore,
   upstream/                ModelNFT, ForestRuntime; upstream Forest sources the crypto contracts derive from
 scripts/                   build, page generator, contract generator/deployer, asset renderer
+deploy/                    Server setup: the site on nginx, the MCP service, a one-command upgrade (see DEPLOY.md)
+mcp/                       MCP server for AI agents (Deno): list, read and ask Crypto AI models, served at /mcp
 tests/                     Market engine, numeric contract, burnable-fee contracts (local chain), static site check
 deployments/genesisl1.json The original GL1F contract set, read-only here
 ```
@@ -54,7 +56,7 @@ Completed candles only, frozen to the venue's clock. Coinbase and Hyperliquid no
 
 ## Backtests
 
-A signal exists only after its candle closes, so trades enter at the next candle's open, and only if that candle traded and its open is still between the stop and the target the signal defined; otherwise there is no trade. One position at a time, stop first when both levels are touched in one candle. Leverage from 1× to 100× (margin per trade, maintenance margin, isolated-margin liquidation, account ruin) is tested in `tests/backtest_rules.mjs`. Funding payments are not included; Coinbase spot runs without leverage.
+A signal exists only after its candle closes, so trades enter at the next candle's open, and only if that candle traded and its open is still between the stop and the target the signal defined; otherwise there is no trade. One position at a time, stop first when both levels are touched in one candle. Leverage from 1× to 100× (margin per trade, maintenance margin, isolated-margin liquidation, account ruin) is tested in `tests/backtest_rules.mjs`. Funding payments are not included; Coinbase spot runs without leverage. The entry threshold can have an upper P limit (a trade opens only when the probability is in the range), and leverage is any whole number from 1× to 100×.
 
 ## Model monetization and marketplace
 
@@ -97,7 +99,14 @@ Set your Google Analytics 4 measurement ID once: `analytics.googleMeasurementId`
 
 ### Web3 API
 
-`site/sdk/gl1f-crypto.js` (source `src/sdk/gl1f-crypto.js`) calls any model from code with ethers v6: `model(tokenId)`, `latestInputs(model, { engine })` with `GL1FCrypto.nodeEngine()` or `browserEngine()` (the published engine `site/sdk/gl1f-engine.js`), `predict(model, valuesQ, { accessKey | owner | payer })`, `newAccessKey()`, `buyAccess(model, planId, key, signer)` and `accessStatus(model, key)`. Paid models are read with an access key that holds a plan (EIP-712 `AccessView`, verified by `predictAccessView`), the admin's signature (`OwnerView`) or a fee per run (`predictTx`). Tested on a local chain by `tests/sdk_check.mjs`. See the docs page and the Inference step's Web3 API panel.
+`site/sdk/gl1f-crypto.js` (source `src/sdk/gl1f-crypto.js`) calls any model from code with ethers v6: `model(tokenId)`, `latestInputs(model, { engine })` with `GL1FCrypto.nodeEngine()` or `browserEngine()` (the published engine `site/sdk/gl1f-engine.js`), `predict(model, valuesQ, { accessKey | owner | payer, threshold, thresholdMax })` (the answer is yes when threshold <= P <= thresholdMax, defaults 0.5 and 1), `ask(model, { engine, threshold })` (the latest answer in one call), `decide(probability, range)`, `newAccessKey()`, `buyAccess(model, planId, key, signer)` and `accessStatus(model, key)`. Paid models are read with an access key that holds a plan (EIP-712 `AccessView`, verified by `predictAccessView`), the admin's signature (`OwnerView`) or a fee per run (`predictTx`). Tested on a local chain by `tests/sdk_check.mjs`. See the docs page and the Inference step's Web3 API panel.
+
+### MCP server for AI agents
+
+`mcp/` is a Model Context Protocol server, so AI assistants and agents (Claude, ChatGPT, Claude Code, Codex...) can use
+the models without code: `list_models`, `get_model`, `ask_model` (with an optional `threshold` and `threshold_max`)
+and `trading_rules`. It runs on Deno with ethers as its only dependency, reads the deployed site's own files, and is
+read-only (no keys). Live at `https://crypto.gl1f.com/mcp`; see `mcp/README.md`, and `deploy/setup-mcp.sh` to run it.
 
 ### Audit
 

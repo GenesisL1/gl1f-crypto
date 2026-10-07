@@ -1,7 +1,7 @@
 <div class="docs-layout">
 <nav class="toc" aria-label="On this page">
       <a href="#overview">Overview</a><a href="#contracts">Contracts</a><a href="#fees">Fees &amp; burns</a><a href="#monetization">Model monetization</a><a href="#licenses">Licenses</a><a href="#admin">Admin &amp; multisig</a><a href="#stats">Live stats</a>
-      <a href="#data">Data &amp; signals</a><a href="#validation">Validation</a><a href="#backtests">Backtests</a><a href="#verify">Verify it yourself</a><a href="#web3-api">Web3 API</a><a href="#track-record">Track record</a><a href="#disclaimer">Disclaimer</a><a href="./legal/terms.html">Terms of Service</a>
+      <a href="#data">Data &amp; signals</a><a href="#validation">Validation</a><a href="#backtests">Backtests</a><a href="#verify">Verify it yourself</a><a href="#web3-api">Web3 API</a><a href="#threshold">Yes threshold</a><a href="#mcp">MCP server</a><a href="#track-record">Track record</a><a href="#disclaimer">Disclaimer</a><a href="./legal/terms.html">Terms of Service</a>
     </nav>
 <div class="docs">
       <section id="overview">
@@ -113,14 +113,15 @@
       </section>
       <section id="web3-api">
         <h2>Web3 API: run any model from code.</h2>
-        <p>The <a href="./api.html">Web3 API page</a> has the full reference, the addresses and a bot example. Every Crypto AI model can be called from your own code, in a browser or in Node 18+, with the GL1F Crypto helper <a href="./sdk/gl1f-crypto.js">sdk/gl1f-crypto.js</a> and <code>ethers</code> v6. The Inference step's <b>Web3 API</b> panel shows ready code for the open model, its contract addresses and RPC.</p>
+        <p>The <a href="./api.html">Web3 API page</a> has the full reference, the addresses and a bot example. Every Crypto AI model can be called from your own code, in a browser, in Deno or in Node 18+, with the GL1F Crypto helper <a href="./sdk/gl1f-crypto.js">sdk/gl1f-crypto.js</a> and <code>ethers</code> v6. The Inference step's <b>Web3 API</b> panel shows ready code for the open model, its contract addresses and RPC.</p>
         <pre class="code">import * as ethers from "ethers";
 import { GL1FCrypto } from "./gl1f-crypto.js";
 const gl1f = new GL1FCrypto({ ethers, rpcUrl, chainId: 29, registry, runtime });
 const model = await gl1f.model(42);                         // title, question, pricing, plans, inputs
 const engine = await GL1FCrypto.nodeEngine();               // browser: await GL1FCrypto.browserEngine()
 const inputs = await gl1f.latestInputs(model, { engine });  // latest completed candle, the studio's own engine
-const out = await gl1f.predict(model, inputs.valuesQ);      // { probability, scoreQ, via }</pre>
+const out = await gl1f.predict(model, inputs.valuesQ);      // { probability, yes, answer, scoreQ, via }
+const now = await gl1f.ask(model, { engine, threshold: 0.6 }); // the same in one call, yes at 0.6 or more</pre>
         <div class="table-scroll"><table class="tbl">
           <tr><th>Model</th><th>Call</th><th>What it costs</th></tr>
           <tr><td>Free or tips</td><td><code>predict(model, valuesQ)</code>: a read of <code>predictView</code></td><td>Nothing: no key, no gas</td></tr>
@@ -130,6 +131,32 @@ const out = await gl1f.predict(model, inputs.valuesQ);      // { probability, sc
         </table></div>
         <p><b>Access keys.</b> <code>gl1f.newAccessKey()</code> makes a key pair; buy a plan for its address once and keep its private key on your server or bot. Signatures expire after 5 minutes by default and cover the exact inputs, so a key cannot be replayed for other inputs. <code>accessStatus(model, address)</code> tells until which block a key works. The studio can create a key and buy a plan for it in the Web3 API panel.</p>
         <p>Inputs are the model's signals on a completed candle, quantized to integers (<code>quantize(values, scaleQ)</code>). <code>latestInputs</code> computes them with the published market engine (<a href="./sdk/gl1f-engine.js">sdk/gl1f-engine.js</a>), the code the studio runs, so the score equals the studio's and the chain's. Models that use world signals fetch the same public data.</p>
+      </section>
+      <section id="threshold">
+        <h2>Yes or no: <span class="serif">your threshold.</span></h2>
+        <p>A Crypto AI model gives a probability <b>P</b> that the answer to its question is yes, for the latest completed candle. By default the answer is <b>Yes</b> when P is 0.5 or more. You can set your own rule: a stricter <b>threshold</b> (Yes only at 0.6 or more, say) and an optional <b>upper limit</b>, so the answer is Yes only inside a range (from 0.6 to 0.85, say). The rule never changes the probability, only the yes or no read from it.</p>
+        <div class="table-scroll"><table class="tbl">
+          <tr><th>Where</th><th>How</th></tr>
+          <tr><td>Model page</td><td>In <b>Ask the model</b>: "Answer Yes when the probability is from … to …" (default 0.50 to 1.00). The answer on screen follows the fields at once, without running the model again, and a link can carry them: <code>model.html?id=1&amp;threshold=0.6&amp;threshold_max=0.85</code>.</td></tr>
+          <tr><td>Studio inference</td><td><b>Signal threshold</b> and <b>Upper limit</b>; the receipt records both.</td></tr>
+          <tr><td>Backtest</td><td><b>Entry threshold</b> and <b>Upper P limit</b>: a trade opens only when P is in the range. The threshold table compares lower thresholds under your upper limit.</td></tr>
+          <tr><td>Web3 API</td><td><code>predict(model, valuesQ, { threshold, thresholdMax })</code> and <code>ask(model, { engine, threshold, thresholdMax })</code> return <code>yes</code> and <code>answer</code>; <code>decide(probability, { threshold, thresholdMax })</code> applies the rule to a probability you already have.</td></tr>
+          <tr><td>MCP server</td><td><code>ask_model</code> and <code>trading_rules</code> take <code>threshold</code> and <code>threshold_max</code>.</td></tr>
+        </table></div>
+        <p>Both limits are numbers from 0 to 1, the threshold not above the upper limit; the defaults are 0.5 and 1. A higher threshold usually leaves fewer signals: before trusting one, check in the backtest how many trades it leaves and whether nearby thresholds do about as well. Educational, not investment advice.</p>
+      </section>
+      <section id="mcp">
+        <h2>MCP server: <span class="serif">models for AI agents.</span></h2>
+        <p>AI assistants such as Claude and ChatGPT connect to outside tools through the Model Context Protocol (MCP). GL1F Crypto has an MCP server at <code>https://crypto.gl1f.com/mcp</code>: connect it, and the assistant can list Crypto AI models, read one, ask it for its current answer and get the rules its backtest trades by. It is read-only and needs no key, wallet or login.</p>
+        <div class="table-scroll"><table class="tbl">
+          <tr><th>Tool</th><th>What it does</th></tr>
+          <tr><td><code>list_models</code></td><td>Published models, newest first: number, title, question, market and candle, access (free, tips or paid) and page.</td></tr>
+          <tr><td><code>get_model</code></td><td>One model's details, with the trading rules its backtest uses.</td></tr>
+          <tr><td><code>ask_model</code></td><td>Its answer for the latest completed candle: yes or no, the probability, the candle and the model's page. Optional <code>threshold</code> and <code>threshold_max</code> (defaults 0.5 and 1). Free and tip models.</td></tr>
+          <tr><td><code>trading_rules</code></td><td>The backtest's rules: direction, the signal range, entry, target and stop from the EMA baseline, and the time limit.</td></tr>
+        </table></div>
+        <p><b>Connect it.</b> Claude: add a custom connector with the address above. ChatGPT: turn on developer mode, then add a connector (app) with the address and no authentication. Claude Code: <code>claude mcp add --transport http gl1f-crypto https://crypto.gl1f.com/mcp</code>. Any MCP client that speaks Streamable HTTP works, and local agents can run it over stdio from the repository (<code>deno task stdio</code> in <code>mcp/</code>).</p>
+        <p>It runs a model the same way as the model page, once per candle for everyone who asks: the inputs from public exchange data, the answer from GenesisL1. Paid models are not available through it, and each client may send 120 requests a minute. The code is in the repository's <code>mcp/</code> folder (Deno, MIT), with <code>deploy/setup-mcp.sh</code> to run your own.</p>
       </section>
       <section id="track-record">
         <h2>A track record anyone can check.</h2>
@@ -162,14 +189,14 @@ const out = await gl1f.predict(model, inputs.valuesQ);      // { probability, sc
         <div class="eyebrow"><b>06</b> / Backtests</div>
         <h2>The rules of the <span class="serif">test drive.</span></h2>
         <ul>
-          <li>The worker replays the Crypto AI model's exact signals over the chosen period using the same engine and feature seed as the training dataset.</li>
-          <li>A signal is a candle whose probability is at or above the threshold. The trade enters at the next candle's open, long for Up Crypto AI models and short for Down Crypto AI models.</li>
+          <li>The worker replays the Crypto AI model's exact signals over the chosen period with the same engine as the training dataset. The signals warm up on the 120 days before the period (or from the training data's start, when that is later), so any past period can be tested, including one before the training data.</li>
+          <li>A signal is a candle whose probability is at or above the entry threshold, and at or below the upper P limit when one is set (by default 1: no limit). The trade enters at the next candle's open, long for Up Crypto AI models and short for Down Crypto AI models.</li>
           <li>Target and stop are the label's levels, measured from the EMA baseline at the signal candle. If both are touched in one candle, the stop wins. A candle that opens beyond a level exits at that open. Signals whose entry price is already past the target or the stop are skipped and counted separately.</li>
           <li>Without a hit, the trade exits at the close of the last horizon candle. One position at a time; by default the whole account is the margin at 1× (no leverage), and both can be changed (see below).</li>
           <li>Fees are charged on entry and exit; slippage worsens both fills. Funding payments, partial fills, liquidity and outages are not modelled.</li>
           <li>The default period is the Crypto AI model's final test period, which it never trained on. Earlier periods are in-sample and flagged.</li>
         </ul>
-        <p><strong>Entries and leverage.</strong> A signal exists only after its candle has closed, so the earliest trade is the next candle's open. There is no trade if that candle had no trades (a gap-filled bucket), if there is no next candle, or if its open is already beyond the target or the stop the signal defined. One position at a time; when the target and the stop are both touched in one candle, the stop is assumed first. Leverage from 1× to 100× multiplies returns on margin and fees on the full notional; with isolated margin, a position is liquidated when the adverse move reaches about 1 / leverage minus the maintenance margin, losing that trade's margin. Funding payments are not included. Coinbase spot runs without leverage.</p>
+        <p><strong>Entries and leverage.</strong> A signal exists only after its candle has closed, so the earliest trade is the next candle's open. There is no trade if that candle had no trades (a gap-filled bucket), if there is no next candle, or if its open is already beyond the target or the stop the signal defined. One position at a time; when the target and the stop are both touched in one candle, the stop is assumed first. Leverage, any whole number from 1× to 100×, multiplies returns on margin and fees on the full notional; with isolated margin, a position is liquidated when the adverse move reaches about 1 / leverage minus the maintenance margin, losing that trade's margin. Funding payments are not included. Coinbase spot runs without leverage.</p>
       </section>
 
       <section id="verify">

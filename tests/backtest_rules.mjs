@@ -42,4 +42,16 @@ assert.equal(s.stats.bankrupt, true); assert.equal(s.trades.length, 1); assert.e
 // 8. 1x keeps the original spot arithmetic.
 s = simulate(market([flat, [100, 101.3, 99.8, 101.1], flat, flat]), prob(4), { ...base, feePct: 0.1 });
 assert.ok(Math.abs(s.trades[0].net - (1.01 * 0.999 * 0.999 - 1)) < 1e-12);
-console.log("backtest rules: next-open entry, void signals, untradable candles, stop-first, leverage fees, liquidation and ruin OK");
+// 9. The upper P limit: a 0.9 signal trades below no limit (1) or a 0.95 limit, not under a 0.85 limit.
+const win = market([flat, [100, 101.3, 99.8, 101.1], flat, flat]);
+assert.equal(simulate(win, prob(4), base).trades.length, 1);
+assert.equal(simulate(win, prob(4), { ...base, thresholdMax: 0.95 }).trades.length, 1);
+s = simulate(win, prob(4), { ...base, thresholdMax: 0.85 });
+assert.equal(s.trades.length, 0); assert.equal(s.signals, 0);
+// ... and the lower threshold still applies inside the range: 0.9 is above a 0.95 threshold's reach.
+assert.equal(simulate(win, prob(4), { ...base, threshold: 0.95, thresholdMax: 1 }).trades.length, 0);
+// 10. Leverage is any whole number from 1 to 100: 7 stays 7, 2.6 rounds to 3, 150 caps at 100, 0 or nonsense is 1.
+for (const [given, used] of [[7, 7], [2.6, 3], [150, 100], [0, 1], ["x", 1]]) assert.equal(simulate(win, prob(4), { ...base, leverage: given }).stats.leverage, used, `leverage ${given}`);
+s = simulate(win, prob(4), { ...base, leverage: 7, feePct: 0.05 });
+assert.ok(Math.abs(s.trades[0].net - (7 * 0.01 - 0.0005 * 7 * (1 + 1.01))) < 1e-12, "7x multiplies the move and the fees");
+console.log("backtest rules: next-open entry, void signals, untradable candles, stop-first, leverage fees, liquidation, ruin, upper P limit and leverage 1–100 OK");
